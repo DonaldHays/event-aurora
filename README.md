@@ -1,2 +1,3 @@
-# event-aurora
+# Event Aurora
+
 Event Aurora for Game Boy

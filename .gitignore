@@ -1,0 +1,4 @@
+node_modules
+sdcc/
+
+.DS_Store
