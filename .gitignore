@@ -1,4 +1,6 @@
 node_modules
 sdcc/
+gblib/lib
+gblib/obj
 
 .DS_Store
