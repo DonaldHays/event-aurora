@@ -2,15 +2,27 @@ CC = sdcc/bin/sdcc
 ASMC = sdcc/bin/sdasgb
 LIBTOOL = sdcc/bin/sdar
 
-CFLAGS = -c -mgbz80 -I "include"
+CFLAGS = -c -mgbz80 -I "gblib/include"
 
-GBLIBSRCS = gblib/src/gb.c
-GBLIBOBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIBSRCS)))
+GBLIB_SRCS = gblib/src/gb.c
+GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
 
-build: gblib/lib/gb.lib
+ENSURE_DIRECTORY = @mkdir -p $(@D)
+
+build: library
+
+clean: cleanLibrary
+
+cleanLibrary:
+	rm -rf gblib/obj
+	rm -rf gblib/lib
+
+library: gblib/lib/gb.lib
 
 gblib/obj/%.rel: gblib/src/%.c
+	$(ENSURE_DIRECTORY)
 	$(CC) $(CFLAGS) $< -o $@
 
-gblib/lib/gb.lib: $(GBLIBOBJS)
-	$(LIBTOOL) -rc gblib/lib/gb.lib $(GBLIBOBJS)
+gblib/lib/gb.lib: $(GBLIB_OBJS)
+	$(ENSURE_DIRECTORY)
+	$(LIBTOOL) -rc gblib/lib/gb.lib $(GBLIB_OBJS)
