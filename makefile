@@ -17,7 +17,16 @@ cleanLibrary:
 	rm -rf gblib/obj
 	rm -rf gblib/lib
 
-library: gblib/lib/gb.lib
+library: gblib/obj/dependencies gblib/lib/gb.lib
+
+gblib/obj/dependencies: $(GBLIB_SRCS)
+	$(ENSURE_DIRECTORY)
+	@rm -f gblib/obj/dependencies
+	@for srcFile in $(GBLIB_SRCS) ; do \
+		{ printf "gblib/obj/"; $(CC) -MM $$srcFile; } >> gblib/obj/dependencies ; \
+	done
+
+-include gblib/obj/dependencies
 
 gblib/obj/%.rel: gblib/src/%.c
 	$(ENSURE_DIRECTORY)
