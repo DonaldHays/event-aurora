@@ -2,5 +2,7 @@ node_modules
 sdcc/
 gblib/lib
 gblib/obj
+game/bin
+game/obj
 
 .DS_Store
