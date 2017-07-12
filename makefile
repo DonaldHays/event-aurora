@@ -10,9 +10,11 @@ GBLIB_SRCS = \
 	gblib/src/gb.c \
 	gblib/src/joypad.c
 
-GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
+HOME_SRCS = \
+	game/src/main.c \
+	game/src/module.c
 
-HOME_SRCS = game/src/main.c
+GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
 HOME_OBJS = $(patsubst game/src%,game/obj%,$(patsubst %.c,%.rel,$(HOME_SRCS)))
 
 GAME_OBJS = $(HOME_OBJS)
@@ -54,7 +56,16 @@ cleanGame:
 	rm -rf game/obj
 	rm -rf game/bin
 
-game: game/bin/EventAurora.gb
+game: game/obj/dependencies game/bin/EventAurora.gb
+
+game/obj/dependencies: $(HOME_SRCS)
+	$(ENSURE_DIRECTORY)
+	@rm -f game/obj/dependencies
+	@for srcFile in $(HOME_SRCS) ; do \
+		{ printf "game/obj/"; $(CC) -MM $$srcFile; } >> game/obj/dependencies ; \
+	done
+
+-include game/obj/dependencies
 
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)

@@ -4,6 +4,8 @@
 #define true 1
 #define false 0
 
+#define null 0
+
 typedef signed char GBInt8;
 typedef unsigned char GBUInt8;
 
