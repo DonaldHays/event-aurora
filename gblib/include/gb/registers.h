@@ -3,11 +3,6 @@
 
 #include "types.h"
 
-#define gbTileMemory ((volatile void *)0x8000)
-#define gbTileMap0 ((volatile void *)0x9800)
-#define gbTileMap1 ((volatile void *)0x9C00)
-#define gbSRAM ((volatile void *)0xA000)
-
 /** A pointer to a `GBUInt8` in memory. */
 #define GBRegister volatile GBUInt8 *
 

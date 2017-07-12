@@ -6,6 +6,11 @@
 #include "interrupts.h"
 #include "joypad.h"
 
+#define gbTileMemory ((volatile void *)0x8000)
+#define gbTileMap0 ((volatile void *)0x9800)
+#define gbTileMap1 ((volatile void *)0x9C00)
+#define gbSRAM ((volatile void *)0xA000)
+
 #define gbShadeBlack 3
 #define gbShadeDarkGray 2
 #define gbShadeLightGray 1
@@ -58,14 +63,14 @@ _gbMerge(counter, $): \
     #define gbAssert(expression, message)
 #endif
 
-#define gbBackgroundScrollSet(x, y) { *(gbBackgroundScrollXRegister) = (x); *(gbBackgroundScrollYRegister) = (y); }
-#define gbWindowScrollSet(x, y) { *(gbWindowScrollXRegister) = (x); *(gbWindowScrollYRegister) = (y); }
-#define gbPaletteSet(register, black, dark, light, white) { *(register) = ((black) << 6) | ((dark) << 4) | ((light) << 2) | (white); }
+#define gbBackgroundScrollSet(x, y) { gbBackgroundScrollXRegister = (x); gbBackgroundScrollYRegister = (y); }
+#define gbWindowScrollSet(x, y) { gbWindowScrollXRegister = (x); gbWindowScrollYRegister = (y); }
+#define gbPaletteMake(black, dark, light, white) (((black) << 6) | ((dark) << 4) | ((light) << 2) | (white))
 
-#define gbROMBankSet(bank) { *(gbROMSelectRegister) = bank; }
+#define gbROMBankSet(bank) { gbROMSelectRegister = bank; }
 
-#define gbSRAMEnable() { *(gbSRAMEnableRegister) = 0x0A; }
-#define gbSRAMDisable() { *(gbSRAMEnableRegister) = 0x00; }
+#define gbSRAMEnable() { gbSRAMEnableRegister = 0x0A; }
+#define gbSRAMDisable() { gbSRAMEnableRegister = 0x00; }
 
 void gbLCDDisable();
 void gbLCDEnable();
