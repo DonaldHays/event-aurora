@@ -1,5 +1,5 @@
-#ifndef types_h
-#define types_h
+#ifndef gb_types_h
+#define gb_types_h
 
 #define true 1
 #define false 0

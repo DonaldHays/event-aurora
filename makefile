@@ -6,7 +6,10 @@ CFLAGS = -c -mgbz80 -I "gblib/include"
 ASMFLAGS = -plosgff
 LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib
 
-GBLIB_SRCS = gblib/src/gb.c
+GBLIB_SRCS = \
+	gblib/src/gb.c \
+	gblib/src/joypad.c
+
 GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
 
 HOME_SRCS = game/src/main.c

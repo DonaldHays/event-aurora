@@ -1,5 +1,5 @@
-#ifndef interrupts_h
-#define interrupts_h
+#ifndef gb_interrupts_h
+#define gb_interrupts_h
 
 extern volatile void (*vblankInterruptHandler)();
 extern volatile void (*lcdInterruptHandler)();
