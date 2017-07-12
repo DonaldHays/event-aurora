@@ -11,6 +11,9 @@
 #define gbTileMap1 ((volatile void *)0x9C00)
 #define gbSRAM ((volatile void *)0xA000)
 
+#define gbTileMapWidth 32
+#define gbTileMapHeight 32
+
 #define gbShadeBlack 3
 #define gbShadeDarkGray 2
 #define gbShadeLightGray 1
