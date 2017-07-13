@@ -43,6 +43,12 @@ if(fs.existsSync(metaFilePath)) {
   if(meta["bank"] !== undefined) {
     outputOptions["bank"] = meta["bank"];
   }
+  
+  if(meta["count"] !== undefined) {
+    const count = meta["count"];
+    const byteOffset = count * 16;
+    bytes.splice(byteOffset);
+  }
 }
 
 if(outputExtension == ".c") {

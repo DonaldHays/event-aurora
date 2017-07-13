@@ -4,5 +4,6 @@ gblib/lib
 gblib/obj
 game/bin
 game/obj
+game/src/data_*
 
 .DS_Store

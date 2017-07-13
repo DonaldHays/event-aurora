@@ -4,7 +4,7 @@ LIBTOOL = sdcc/bin/sdar
 
 CFLAGS = -c -mgbz80 -I "gblib/include"
 ASMFLAGS = -plosgff
-LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib
+LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib -Wl-b_CODE_1=0x014000
 
 GBLIB_SRCS = \
 	gblib/src/gb.c \
@@ -14,10 +14,15 @@ HOME_SRCS = \
 	game/src/main.c \
 	game/src/module.c
 
-GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
-HOME_OBJS = $(patsubst game/src%,game/obj%,$(patsubst %.c,%.rel,$(HOME_SRCS)))
+BANK1_GFX = \
+	game/data/gfx/font.png
 
-GAME_OBJS = $(HOME_OBJS)
+BANK1_SRCS = $(patsubst game/data/gfx/%.png,game/src/data_gfx_%.c,$(BANK1_GFX))
+GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS)
+
+GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
+
+GAME_OBJS = $(patsubst game/src%,game/obj%,$(patsubst %.c,%.rel,$(GAME_SRCS)))
 
 ENSURE_DIRECTORY = @mkdir -p $(@D)
 
@@ -58,14 +63,17 @@ cleanGame:
 
 game: game/obj/dependencies game/bin/EventAurora.gb
 
-game/obj/dependencies: $(HOME_SRCS)
+game/obj/dependencies: $(GAME_SRCS)
 	$(ENSURE_DIRECTORY)
 	@rm -f game/obj/dependencies
-	@for srcFile in $(HOME_SRCS) ; do \
+	@for srcFile in $(GAME_SRCS) ; do \
 		{ printf "game/obj/"; $(CC) -MM $$srcFile; } >> game/obj/dependencies ; \
 	done
 
 -include game/obj/dependencies
+
+game/src/data_gfx_%.c: game/data/gfx/%.png
+	node img2gb -n $(notdir $(basename $<)) $< $@
 
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)
