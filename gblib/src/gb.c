@@ -3,11 +3,11 @@
 // ===
 // Public Variables
 // ===
-volatile void (*vblankInterruptHandler)();
-volatile void (*lcdInterruptHandler)();
-volatile void (*timerInterruptHandler)();
-volatile void (*serialInterruptHandler)();
-volatile void (*joypadInterruptHandler)();
+volatile void (*gbVBlankInterruptHandler)();
+volatile void (*gbLCDInterruptHandler)();
+volatile void (*gbTimerInterruptHandler)();
+volatile void (*gbSerialInterruptHandler)();
+volatile void (*gbJoypadInterruptHandler)();
 
 GBJoypadState gbJoypadState;
 GBJoypadState gbJoypadPressedSinceLastUpdate;

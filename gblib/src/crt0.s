@@ -1,9 +1,9 @@
     .globl _main
-    .globl _joypadInterruptHandler
-    .globl _serialInterruptHandler
-    .globl _timerInterruptHandler
-    .globl _lcdInterruptHandler
-    .globl _vblankInterruptHandler
+    .globl _gbJoypadInterruptHandler
+    .globl _gbSerialInterruptHandler
+    .globl _gbTimerInterruptHandler
+    .globl _gbLCDInterruptHandler
+    .globl _gbVBlankInterruptHandler
     .globl _gbJoypadState
 
     .area _HEADER (ABS)
@@ -18,35 +18,35 @@
     .org 0x0040
 .vblankInterrupt:
     push hl
-    ld hl, #_vblankInterruptHandler
+    ld hl, #_gbVBlankInterruptHandler
     jp .universalInterruptHandler
 
     ; LCD Vector
     .org 0x0048
 .lcdInterrupt:
     push hl
-    ld hl, #_lcdInterruptHandler
+    ld hl, #_gbLCDInterruptHandler
     jp .universalInterruptHandler
 
     ; Timer Vector
     .org 0x0050
 .timerInterrupt:
     push hl
-    ld hl, #_timerInterruptHandler
+    ld hl, #_gbTimerInterruptHandler
     jp .universalInterruptHandler
 
     ; Serial Vector
     .org 0x0058
 .serialInterrupt:
     push hl
-    ld hl, #_serialInterruptHandler
+    ld hl, #_gbSerialInterruptHandler
     jp .universalInterruptHandler
 
     ; Joypad Vector
     .org 0x0060
 .joypadInterrupt:
     push hl
-    ld hl, #_joypadInterruptHandler
+    ld hl, #_gbJoypadInterruptHandler
     jp .universalInterruptHandler
 
     ; Start Vector

@@ -11,3 +11,9 @@ void modulesInit() {
 void blargh() {
     
 }
+
+void modulesUpdate() {
+    gbJoypadStateUpdate();
+    
+    
+}
