@@ -42,6 +42,8 @@ typedef struct {
 extern const Module mainMenuModule;
 
 void modulesInit();
+void modulesCurrentSet(Module * module);
 void modulesUpdate();
+void modulesUpdateGraphics();
 
 #endif

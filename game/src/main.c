@@ -30,6 +30,8 @@ void main() {
     
     gbInterruptsEnable();
     
+    modulesCurrentSet(&mainMenuModule);
+    
     while(true) {
         hasEnteredVBlank = false;
         gbHalt();
@@ -37,6 +39,9 @@ void main() {
             continue;
         }
         
+        modulesUpdateGraphics();
+        
+        gbJoypadStateUpdate();
         modulesUpdate();
     }
 }
