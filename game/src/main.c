@@ -1,5 +1,6 @@
 #include "main.h"
 #include "module.h"
+#include "banks.h"
 
 // ===
 // Private Variables
@@ -23,6 +24,7 @@ void main() {
     gbActiveInterruptsRegister = gbActiveInterruptFlagVBlank;
     
     gbLCDDisable();
+    banksInit();
     modulesInit();
     gbLCDEnable();
     

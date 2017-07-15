@@ -6,6 +6,7 @@
         "registers.h": "c",
         "cdefs.h": "c",
         "interrupts.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "banks.h": "c"
     }
 }

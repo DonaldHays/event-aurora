@@ -12,12 +12,13 @@ GBLIB_SRCS = \
 
 HOME_SRCS = \
 	game/src/main.c \
-	game/src/module.c
+	game/src/module.c \
+	game/src/banks.c
 
 BANK1_GFX = \
 	game/data/gfx/font.png
 
-BANK1_SRCS = $(patsubst game/data/gfx/%.png,game/src/data_gfx_%.c,$(BANK1_GFX))
+BANK1_SRCS = $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS)
 
 GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
@@ -60,6 +61,7 @@ gblib/lib/gb.lib: $(GBLIB_OBJS)
 cleanGame:
 	rm -rf game/obj
 	rm -rf game/bin
+	rm -rf game/src/data
 
 game: game/obj/dependencies game/bin/EventAurora.gb
 
@@ -72,7 +74,8 @@ game/obj/dependencies: $(GAME_SRCS)
 
 -include game/obj/dependencies
 
-game/src/data_gfx_%.c: game/data/gfx/%.png
+game/src/data/gfx_%.c: game/data/gfx/%.png
+	$(ENSURE_DIRECTORY)
 	node img2gb -n $(notdir $(basename $<)) $< $@
 
 game/bin/EventAurora.gb: game/obj/game.ihx
