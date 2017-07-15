@@ -13,7 +13,8 @@ GBLIB_SRCS = \
 HOME_SRCS = \
 	game/src/main.c \
 	game/src/module.c \
-	game/src/banks.c
+	game/src/banks.c \
+	game/src/memory.c
 
 BANK1_SRCS = \
 	game/src/bank1/mainMenu.c

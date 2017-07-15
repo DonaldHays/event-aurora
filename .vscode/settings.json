@@ -8,6 +8,7 @@
         "interrupts.h": "c",
         "types.h": "c",
         "banks.h": "c",
-        "module.h": "c"
+        "module.h": "c",
+        "gfx_font.h": "c"
     }
 }
