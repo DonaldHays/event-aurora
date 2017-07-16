@@ -10,7 +10,7 @@
 void mainMenuInit() {
     gbLog("Initialize Main Menu!");
     
-    memoryCopy(gbTileMemory, font, fontLength);
+    memoryCopyBanked(gbTileMemory, font, fontLength, fontBank);
     memorySet(gbTileMap0, 0x54, gbTileMapWidth * gbTileMapHeight);
 }
 

@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "banks.h"
 
 // ===
 // Public API
@@ -184,4 +185,13 @@ void memoryCopy(void * destination, const void * source, GBUInt16 length) {
 .endLoop:
     
     __endasm;
+}
+
+void memoryCopyBanked(void * destination, const void * source, GBUInt16 length, GBUInt8 sourceROMBank) {
+    GBUInt8 originalROMBank;
+    originalROMBank = banksROMGet();
+    
+    banksROMSet(sourceROMBank); {
+        memoryCopy(destination, source, length);
+    } banksROMSet(originalROMBank);
 }

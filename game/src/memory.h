@@ -24,4 +24,10 @@ void memoryCopy16(void * destination, const void * source);
  */
 void memoryCopy(void * destination, const void * source, GBUInt16 length);
 
+/**
+ * Copies `length` bytes from `source` in `sourceROMBank` to `destination`, and
+ * then restores the current ROM bank.
+ */
+void memoryCopyBanked(void * destination, const void * source, GBUInt16 length, GBUInt8 sourceROMBank);
+
 #endif
