@@ -1,6 +1,6 @@
 #include "mainMenu.h"
 #include "../memory.h"
-#include "../data/gfx_font.h"
+#include "../text.h"
 
 #pragma bank 1
 
@@ -8,14 +8,12 @@
 // Public API
 // ===
 void mainMenuInit() {
-    gbLog("Initialize Main Menu!");
-    
-    memoryCopyBanked(gbTileMemory, font, fontLength, fontBank);
+    textLoadFont(gbTileMemory, false);
     memorySet(gbTileMap0, 0x54, gbTileMapWidth * gbTileMapHeight);
 }
 
 void mainMenuWake() {
-    gbLog("Wake main menu!");
+    // gbLog("Wake main menu!");
 }
 
 void mainMenuUpdate() {
