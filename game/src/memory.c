@@ -11,16 +11,15 @@ void memorySet(void * destination, GBUInt8 value, GBUInt16 length) {
     (void)length;
     __asm
     
-    ; bc = length
-    ldhl sp, #5
-    ld c, (hl)
-    inc hl
-    ld b, (hl)
-    
     ; d = value
     ldhl sp, #4
-    ld a, (hl)
+    ld a, (hl+)
     ld d, a
+    
+    ; bc = length
+    ld a, (hl+)
+    ld c, a
+    ld b, (hl)
     
     ; hl = destination
     ldhl sp, #2
@@ -50,7 +49,7 @@ void memorySet(void * destination, GBUInt8 value, GBUInt16 length) {
 }
 
 void memoryCopy16(void * destination, const void * source) {
-    // This routine takes about 114 machine cycles.
+    // This routine takes about 113 machine cycles.
     
     // Silence unused variable warnings
     (void)destination;
@@ -62,10 +61,10 @@ void memoryCopy16(void * destination, const void * source) {
     ldhl sp, #2
     ld e, (hl)
     inc hl
-    ld d, (hl)
+    ld a, (hl+)
+    ld d, a
     
     ; hl = source
-    inc hl
     ld a, (hl+)
     ld h, (hl)
     ld l, a

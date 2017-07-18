@@ -20,7 +20,6 @@ void gbJoypadStateUpdate() {
     ; Read several times to burn cycles waiting for register to update
     ld a, (#0xff00)
     ld a, (#0xff00)
-    cpl ; Invert so 1=on and 0=off
     and #0x0f ; Only want 4 least significant bits
     ld b, a ; Store in b
     
@@ -36,10 +35,10 @@ void gbJoypadStateUpdate() {
     ld a, (#0xff00)
     ld a, (#0xff00)
     
-    cpl ; invert
     and #0x0f ; only 4 least significant bits
     swap a  ; Swap nibbles
     or b ; Merge with b
+    cpl ; Invert so 1=on and 0=off
     
     ld (_gbJoypadState), a
     
