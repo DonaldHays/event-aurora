@@ -10,6 +10,7 @@
         "banks.h": "c",
         "module.h": "c",
         "gfx_font.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "testsong.h": "c"
     }
 }

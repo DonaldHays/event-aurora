@@ -1,45 +1,103 @@
 #include "main.h"
 #include "module.h"
+#include "audio.h"
 #include "banks.h"
+#include "bank2/testSong.h"
 
 // ===
 // Private Variables
 // ===
-volatile GBBool hasEnteredVBlank;
+
+/**
+ * Has a vertical blank interrupt recently occurred?
+ */
+volatile GBBool _hasEnteredVBlank;
 
 // ===
 // Private API
 // ===
+
+/**
+ * Handles the vertical blank interrupt by setting `_hasEnteredVBlank` to
+ * `true`.
+ */
 void _vblank() {
-    hasEnteredVBlank = true;
+    _hasEnteredVBlank = true;
+}
+
+/**
+ * Initializes variables used by the main subsystem.
+ */
+void _initializeMainMemory() {
+    _hasEnteredVBlank = false;
+}
+
+/**
+ * Installs and activates the interrupt handlers.
+ */
+void _initializeInterruptHandlers() {
+    gbVBlankInterruptHandler = &_vblank;
+    gbActiveInterruptsRegister = gbActiveInterruptFlagVBlank;
+    
+    gbInterruptsEnable();
+}
+
+/**
+ * Initializes all other subsystems in the program.
+ */
+void _initializeSubsystems() {
+    // The API contract guarantees that the LCD is disabled when subsystems
+    // (especially the module subsystem) are initialized, allowing them to
+    // freely write to video memory.
+    gbLCDDisable(); {
+        banksInit();
+        audioInit();
+        modulesInit();
+        
+        // !!!
+        // TEMP
+        banksROMSet(2);
+        testSongInit();
+        // !!!
+    } gbLCDEnable();
+}
+
+/**
+ * Returns after the system enters the vertical blank period.
+ *
+ * @precondition interrupts must be enabled.
+ */
+void _waitForVBlank() {
+    while(true) {
+        _hasEnteredVBlank = false;
+        gbHalt();
+        if(_hasEnteredVBlank) {
+            break;
+        }
+    }
 }
 
 // ===
 // Public API
 // ===
 void main() {
-    hasEnteredVBlank = false;
-    
-    gbVBlankInterruptHandler = &_vblank;
-    gbActiveInterruptsRegister = gbActiveInterruptFlagVBlank;
-    
-    gbLCDDisable();
-    banksInit();
-    modulesInit();
-    gbLCDEnable();
-    
-    gbInterruptsEnable();
+    _initializeMainMemory();
+    _initializeSubsystems();
+    _initializeInterruptHandlers();
     
     modulesCurrentSet(&mainMenuModule);
     
     while(true) {
-        hasEnteredVBlank = false;
-        gbHalt();
-        if(hasEnteredVBlank == false) {
-            continue;
-        }
+        _waitForVBlank();
         
         modulesUpdateGraphics();
+        audioUpdate();
+        
+        // !!!
+        // TEMP
+        banksROMSet(2);
+        testSongUpdate();
+        // !!!
         
         gbJoypadStateUpdate();
         modulesUpdate();

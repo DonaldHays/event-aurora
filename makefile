@@ -4,7 +4,7 @@ LIBTOOL = sdcc/bin/sdar
 
 CFLAGS = -c -mgbz80 -I "gblib/include"
 ASMFLAGS = -plosgff
-LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib -Wl-b_CODE_1=0x014000
+LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib -Wl-b_CODE_1=0x014000 -Wl-b_CODE_2=0x024000
 
 GBLIB_SRCS = \
 	gblib/src/gb.c \
@@ -14,6 +14,7 @@ HOME_SRCS = \
 	game/src/main.c \
 	game/src/module.c \
 	game/src/banks.c \
+	game/src/audio.c \
 	game/src/memory.c \
 	game/src/text.c
 
@@ -27,7 +28,10 @@ BANK1_GFX = \
 	game/data/gfx/font.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
-GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS)
+BANK2_SRCS = \
+	game/src/bank2/testSong.c
+
+GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS)
 
 GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
 
