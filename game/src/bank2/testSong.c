@@ -1,14 +1,13 @@
 #include "testSong.h"
-#include "../audio.h"
 
 #pragma bank 2
 
-const GBUInt8 testInstruments[2][4] = {
+const SquareInstrument testInstruments[2] = {
     { 0x00, 0x40, 0xF3, 0x03 },
     { 0x00, 0x80, 0x73, 0x03 }
 };
 
-const PatternRow testPattern[16] = {
+const AudioPattern testPattern = {
     { 24, 0, 0 },
     { 0, 0, 0 },
     { 0, 0, 0 },
@@ -27,30 +26,36 @@ const PatternRow testPattern[16] = {
     { 28, 0, 0 },
     { 0, 0, 0 },
     { 0, 0, 0 },
-    { 0, 0, 0 }
+    { 0, 0, 0 },
 };
 
-PatternRow const * currentPattern;
+const AudioComposition testComposition = {
+    testInstruments,
+    &testPattern,
+    { null, 0, 0 }
+};
+
+AudioPattern const * currentPattern;
 GBUInt8 patternIndex;
 GBUInt8 tempo;
 GBUInt8 tempoCount;
 GBUInt16 currentNote;
 GBUInt8 vibrattoCycle;
 
-void play(GBUInt16 note, GBUInt8 const * instrument) {
+void play(GBUInt16 note, SquareInstrument const * instrument) {
     currentNote = note;
     
-    gbTone1SweepRegister = instrument[0];
-    gbTone1PatternRegister = instrument[1];
-    gbTone1VolumeRegister = instrument[2];
+    gbTone1SweepRegister = instrument->sweep;
+    gbTone1PatternRegister = instrument->pattern;
+    gbTone1VolumeRegister = instrument->volume;
     
-    if(instrument[3] & 0x02) {
+    if(instrument->flags & 0x02) {
         gbAudioTerminalRegister |= 0x10;
     } else {
         gbAudioTerminalRegister &= ~0x10;
     }
     
-    if(instrument[3] & 0x01) {
+    if(instrument->flags & 0x01) {
         gbAudioTerminalRegister |= 0x01;
     } else {
         gbAudioTerminalRegister &= ~0x01;
@@ -63,19 +68,19 @@ void play(GBUInt16 note, GBUInt8 const * instrument) {
 void testSongInit() {
     gbAudioTerminalRegister = 0xFF;
     
-    currentPattern = testPattern;
+    currentPattern = &testPattern;
     patternIndex = 0;
     tempo = 12;
     tempoCount = tempo;
     vibrattoCycle = 0;
     
-    if(currentPattern[0].note) {
-        play(audioNoteTable[currentPattern[0].note], testInstruments[currentPattern[0].instrument]);
+    if(currentPattern[0][0].note) {
+        play(audioNoteTable[currentPattern[0][0].note], &testInstruments[currentPattern[0][0].instrument]);
     }
 }
 
 void testSongUpdate() {
-    PatternRow const * currentRow;
+    AudioPatternRow const * currentRow;
     
     if(currentPattern == null) {
         return;
@@ -91,10 +96,10 @@ void testSongUpdate() {
             return;
         }
         
-        currentRow = &currentPattern[patternIndex];
+        currentRow = &currentPattern[0][patternIndex];
         
         if(currentRow->note) {
-            play(audioNoteTable[currentRow->note], testInstruments[currentRow->instrument]);
+            play(audioNoteTable[currentRow->note], &testInstruments[currentRow->instrument]);
         }
     }
     

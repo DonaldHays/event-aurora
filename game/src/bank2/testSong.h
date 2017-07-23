@@ -3,6 +3,10 @@
 
 #include <gb/gb.h>
 
+#include "../audio.h"
+
+extern const AudioComposition testComposition;
+
 typedef struct {
     GBUInt8 note;
     GBUInt8 instrument;
