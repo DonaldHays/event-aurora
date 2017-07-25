@@ -2,6 +2,7 @@
 #include "module.h"
 #include "audio.h"
 #include "banks.h"
+#include "rand.h"
 #include "bank2/testSong.h"
 
 // ===
@@ -50,6 +51,7 @@ void _initializeSubsystems() {
     // (especially the module subsystem) are initialized, allowing them to
     // freely write to video memory.
     gbLCDDisable(); {
+        randomInit();
         banksInit();
         audioInit();
         modulesInit();
