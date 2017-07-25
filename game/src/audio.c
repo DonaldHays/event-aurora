@@ -1,4 +1,19 @@
 #include "audio.h"
+#include "banks.h"
+
+// ===
+// Private Types
+// ===
+typedef struct {
+    AudioComposition const * composition;
+    AudioLayer layer;
+    GBUInt8 romBank;
+    GBUInt8 priority;
+    GBUInt8 tempo;
+    GBUInt8 tempoTimer;
+    GBUInt8 square1ChainIndex;
+    GBUInt8 square1PatternIndex;
+} AudioPlaybackState;
 
 // ===
 // Public Constant Data
@@ -83,19 +98,133 @@ const GBUInt16 audioNoteTable[72] = {
 };
 
 // ===
+// Private Variables
+// ===
+AudioPlaybackState _soundPlaybackState;
+AudioPlaybackState _musicPlaybackState;
+
+// ===
+// Private API
+// ===
+void _audioInitPlaybackState(AudioPlaybackState * state) {
+    state->composition = null;
+    state->priority = 0;
+}
+
+void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioPlaybackState * state, GBUInt8 priority) {
+    GBUInt8 originalBank;
+    
+    if(state->composition != null && state->priority > priority) {
+        return;
+    }
+    
+    originalBank = banksROMGet();
+    banksROMSet(romBank); {
+        state->composition = composition;
+        state->romBank = romBank;
+        state->priority = priority;
+        state->tempo = composition->initialTempo;
+        state->tempoTimer = 0;
+        state->square1ChainIndex = 0;
+        state->square1PatternIndex = 0;
+    } banksROMSet(originalBank);
+}
+
+void _audioStatePlayNotes(AudioPlaybackState * state) {
+    GBUInt8 patternTableIndex;
+    AudioPatternRow const * patternRow;
+    SquareInstrument const * instrument;
+    GBUInt16 note;
+    
+    patternTableIndex = state->composition->square1Chain.rows[state->square1ChainIndex].pattern;
+    patternRow = &(state->composition->patterns[patternTableIndex][state->square1PatternIndex]);
+    instrument = &(state->composition->squareInstruments[patternRow->instrument]);
+    note = audioNoteTable[patternRow->note];
+    
+    if(patternRow->note == 0) {
+        return;
+    }
+    
+    gbTone1SweepRegister = instrument->sweep;
+    gbTone1PatternRegister = instrument->pattern;
+    gbTone1VolumeRegister = instrument->volume;
+    
+    if(instrument->flags & 0x02) {
+        gbAudioTerminalRegister |= 0x10;
+    } else {
+        gbAudioTerminalRegister &= ~0x10;
+    }
+    
+    if(instrument->flags & 0x01) {
+        gbAudioTerminalRegister |= 0x01;
+    } else {
+        gbAudioTerminalRegister &= ~0x01;
+    }
+    
+    gbTone1FrequencyLowRegister = note & 0xFF;
+    gbTone1TriggerRegister = 0x80 | (note >> 8);
+}
+
+void _audioStateIncrement(AudioPlaybackState * state) {
+    state->tempoTimer = state->tempo;
+    
+    state->square1PatternIndex++;
+    if(state->square1PatternIndex == 16) {
+        state->square1PatternIndex = 0;
+        state->square1ChainIndex++;
+    }
+    
+    if(state->square1ChainIndex == state->composition->square1Chain.numberOfRows) {
+        state->composition = null;
+    }
+}
+
+void _audioUpdatePlaybackState(AudioPlaybackState * state) {
+    GBUInt8 originalBank;
+    
+    // If there's no composition, this state is idle.
+    if(state->composition == null) {
+        return;
+    }
+    
+    // If we're between ticks, decrease tempo timer and return.
+    if(state->tempoTimer != 0) {
+        state->tempoTimer--;
+        return;
+    }
+    
+    originalBank = banksROMGet();
+    banksROMSet(state->romBank); {
+        _audioStatePlayNotes(state);
+        _audioStateIncrement(state);
+    } banksROMSet(originalBank);
+}
+
+// ===
 // Public API
 // ===
 void audioInit() {
+    gbAudioTerminalRegister = 0xFF;
     
+    _audioInitPlaybackState(&_soundPlaybackState);
+    _audioInitPlaybackState(&_musicPlaybackState);
+    
+    _soundPlaybackState.layer = audioLayerSound;
+    _musicPlaybackState.layer = audioLayerMusic;
 }
 
 void audioUpdate() {
-    
+    _audioUpdatePlaybackState(&_soundPlaybackState);
+    _audioUpdatePlaybackState(&_musicPlaybackState);
 }
 
 void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioLayer layer, GBUInt8 priority) {
-    (void)composition;
-    (void)romBank;
-    (void)layer;
-    (void)priority;
+    if(layer == audioLayerSound) {
+        _audioPlayComposition(composition, romBank, &_soundPlaybackState, priority);
+    } else if(layer == audioLayerMusic) {
+        _audioPlayComposition(composition, romBank, &_musicPlaybackState, priority);
+    } else {
+        gbLogUInt8(layer);
+        gbFatalError("unrecognized audio layer");
+    }
 }

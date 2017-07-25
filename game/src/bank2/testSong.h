@@ -7,13 +7,4 @@
 
 extern const AudioComposition testComposition;
 
-typedef struct {
-    GBUInt8 note;
-    GBUInt8 instrument;
-    GBUInt16 command;
-} PatternRow;
-
-void testSongInit();
-void testSongUpdate();
-
 #endif

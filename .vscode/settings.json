@@ -11,6 +11,8 @@
         "module.h": "c",
         "gfx_font.h": "c",
         "stdbool.h": "c",
-        "testsong.h": "c"
+        "testsong.h": "c",
+        "thread_policy.h": "c",
+        "audio.h": "c"
     }
 }

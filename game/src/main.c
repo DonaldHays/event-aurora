@@ -53,12 +53,6 @@ void _initializeSubsystems() {
         banksInit();
         audioInit();
         modulesInit();
-        
-        // !!!
-        // TEMP
-        banksROMSet(2);
-        testSongInit();
-        // !!!
     } gbLCDEnable();
 }
 
@@ -86,19 +80,13 @@ void main() {
     _initializeInterruptHandlers();
     
     modulesCurrentSet(&mainMenuModule);
+    audioPlayComposition(&testComposition, 2, audioLayerMusic, 0);
     
     while(true) {
         _waitForVBlank();
         
         modulesUpdateGraphics();
         audioUpdate();
-        
-        // !!!
-        // TEMP
-        banksROMSet(2);
-        testSongUpdate();
-        // !!!
-        
         gbJoypadStateUpdate();
         modulesUpdate();
     }

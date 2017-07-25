@@ -3,8 +3,8 @@
 
 #include <gb/gb.h>
 
-#define audioLayerSound 1
-#define audioLayerMusic 2
+#define audioLayerMusic 1
+#define audioLayerSound 2
 
 typedef struct {
     /**
@@ -112,6 +112,7 @@ typedef struct {
 typedef struct {
     SquareInstrument * squareInstruments;
     AudioPattern * patterns;
+    GBUInt8 initialTempo;
     AudioChain square1Chain;
 } AudioComposition;
 
