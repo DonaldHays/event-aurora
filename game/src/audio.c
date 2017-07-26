@@ -173,8 +173,8 @@ void _audioStatePlayNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8
 }
 
 void _audioStatePlayNotes(AudioPlaybackState * state) {
-    _audioStatePlayNote(state, state->square1ChainIndex, state->square1PatternIndex, &(state->composition->square1Chain), (GBUInt8 *)0xFF10, 0x10, 0x01);
-    _audioStatePlayNote(state, state->square2ChainIndex, state->square2PatternIndex, &(state->composition->square2Chain), (GBUInt8 *)0xFF15, 0x20, 0x02);
+    _audioStatePlayNote(state, state->square1ChainIndex, state->square1PatternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01);
+    _audioStatePlayNote(state, state->square2ChainIndex, state->square2PatternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02);
 }
 
 void _audioStateIncrement(AudioPlaybackState * state) {
