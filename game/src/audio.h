@@ -114,6 +114,7 @@ typedef struct {
     AudioPattern * patterns;
     GBUInt8 initialTempo;
     AudioChain square1Chain;
+    AudioChain square2Chain;
 } AudioComposition;
 
 typedef GBUInt8 AudioLayer;

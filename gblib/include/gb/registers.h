@@ -26,6 +26,7 @@
 #define gbTone1VolumeRegister *((GBRegister)0xFF12)
 #define gbTone1FrequencyLowRegister *((GBRegister)0xFF13)
 #define gbTone1TriggerRegister *((GBRegister)0xFF14)
+#define gbTone2UnusedRegister *((GBRegister)0xFF15)
 #define gbTone2PatternRegister *((GBRegister)0xFF16)
 #define gbTone2VolumeRegister *((GBRegister)0xFF17)
 #define gbTone2FrequencyLowRegister *((GBRegister)0xFF18)

@@ -13,6 +13,8 @@ typedef struct {
     GBUInt8 tempoTimer;
     GBUInt8 square1ChainIndex;
     GBUInt8 square1PatternIndex;
+    GBUInt8 square2ChainIndex;
+    GBUInt8 square2PatternIndex;
 } AudioPlaybackState;
 
 // ===
@@ -127,17 +129,23 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
         state->tempoTimer = 0;
         state->square1ChainIndex = 0;
         state->square1PatternIndex = 0;
+        state->square2ChainIndex = 0;
+        state->square2PatternIndex = 0;
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlayNotes(AudioPlaybackState * state) {
+void _audioStatePlayNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
     GBUInt16 note;
     
-    patternTableIndex = state->composition->square1Chain.rows[state->square1ChainIndex].pattern;
-    patternRow = &(state->composition->patterns[patternTableIndex][state->square1PatternIndex]);
+    if(chainIndex == chain->numberOfRows) {
+        return;
+    }
+    
+    patternTableIndex = chain->rows[chainIndex].pattern;
+    patternRow = &(state->composition->patterns[patternTableIndex][patternIndex]);
     instrument = &(state->composition->squareInstruments[patternRow->instrument]);
     note = audioNoteTable[patternRow->note];
     
@@ -145,36 +153,50 @@ void _audioStatePlayNotes(AudioPlaybackState * state) {
         return;
     }
     
-    gbTone1SweepRegister = instrument->sweep;
-    gbTone1PatternRegister = instrument->pattern;
-    gbTone1VolumeRegister = instrument->volume;
-    
     if(instrument->flags & 0x02) {
-        gbAudioTerminalRegister |= 0x10;
+        gbAudioTerminalRegister |= leftVolume;
     } else {
-        gbAudioTerminalRegister &= ~0x10;
+        gbAudioTerminalRegister &= ~leftVolume;
     }
     
     if(instrument->flags & 0x01) {
-        gbAudioTerminalRegister |= 0x01;
+        gbAudioTerminalRegister |= rightVolume;
     } else {
-        gbAudioTerminalRegister &= ~0x01;
+        gbAudioTerminalRegister &= ~rightVolume;
     }
     
-    gbTone1FrequencyLowRegister = note & 0xFF;
-    gbTone1TriggerRegister = 0x80 | (note >> 8);
+    registers[0] = instrument->sweep;
+    registers[1] = instrument->pattern;
+    registers[2] = instrument->volume;
+    registers[3] = note & 0xFF;
+    registers[4] = 0x80 | (note >> 8);
+}
+
+void _audioStatePlayNotes(AudioPlaybackState * state) {
+    _audioStatePlayNote(state, state->square1ChainIndex, state->square1PatternIndex, &(state->composition->square1Chain), (GBUInt8 *)0xFF10, 0x10, 0x01);
+    _audioStatePlayNote(state, state->square2ChainIndex, state->square2PatternIndex, &(state->composition->square2Chain), (GBUInt8 *)0xFF15, 0x20, 0x02);
 }
 
 void _audioStateIncrement(AudioPlaybackState * state) {
     state->tempoTimer = state->tempo;
     
-    state->square1PatternIndex++;
-    if(state->square1PatternIndex == 16) {
-        state->square1PatternIndex = 0;
-        state->square1ChainIndex++;
+    if(state->square1ChainIndex != state->composition->square1Chain.numberOfRows) {
+        state->square1PatternIndex++;
+        if(state->square1PatternIndex == 16) {
+            state->square1PatternIndex = 0;
+            state->square1ChainIndex++;
+        }
     }
     
-    if(state->square1ChainIndex == state->composition->square1Chain.numberOfRows) {
+    if(state->square2ChainIndex != state->composition->square2Chain.numberOfRows) {
+        state->square2PatternIndex++;
+        if(state->square2PatternIndex == 16) {
+            state->square2PatternIndex = 0;
+            state->square2ChainIndex++;
+        }
+    }
+    
+    if(state->square1ChainIndex == state->composition->square1Chain.numberOfRows && state->square2ChainIndex == state->composition->square2Chain.numberOfRows) {
         state->composition = null;
     }
 }

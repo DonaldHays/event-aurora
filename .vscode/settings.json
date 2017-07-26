@@ -13,6 +13,7 @@
         "stdbool.h": "c",
         "testsong.h": "c",
         "thread_policy.h": "c",
-        "audio.h": "c"
+        "audio.h": "c",
+        "vm_map.h": "c"
     }
 }
