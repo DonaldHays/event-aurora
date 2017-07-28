@@ -31,6 +31,7 @@
 #define gbTone2VolumeRegister *((GBRegister)0xFF17)
 #define gbTone2FrequencyLowRegister *((GBRegister)0xFF18)
 #define gbTone2TriggerRegister *((GBRegister)0xFF19)
+#define gbNoiseUnusedRegister *((GBRegister)0xFF1F)
 #define gbNoiseLengthRegister *((GBRegister)0xFF20)
 #define gbNoiseVolumeRegister *((GBRegister)0xFF21)
 #define gbNoisePolynomialRegister *((GBRegister)0xFF22)

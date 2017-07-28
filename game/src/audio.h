@@ -47,6 +47,43 @@ typedef struct {
 
 typedef struct {
     /**
+     * --LLLLLL
+     *
+     * LLLLLL - Length. From 0 to 0.25 seconds. Larger values yield shorter
+     *   lengths.
+     */
+    GBUInt8 length;
+    
+    /**
+     * VVVVAPPP
+     *
+     * VVVV - Initial volume. Larger values yield higher volumes.
+     * A - Envelope direction. 0 to decrease, 1 to increase.
+     * PPP - Shift amount. Larger values yield smaller shifts. 0 to disable.
+     */
+    GBUInt8 volume;
+    
+    /**
+     * SSSSWDDD
+     *
+     * SSSS - Clock shift. Larger values are "dirtier". Too large a value
+     *   prevents noise from working.
+     * W - Width mode of LFSR. 0 for noise, 1 for buzz.
+     * DDD - Divisor code. Larger values yield lower frequencies.
+     */
+    GBUInt8 polynomial;
+    
+    /**
+     * ------LR
+     *
+     * L - 1 to output to left channel.
+     * R - 1 to output to right channel.
+     */
+    GBUInt8 flags;
+} NoiseInstrument;
+
+typedef struct {
+    /**
      * Index into `audioNoteTable`. 0 is C2, 71 is B7.
      */
     GBUInt8 note;
@@ -111,10 +148,12 @@ typedef struct {
 
 typedef struct {
     SquareInstrument * squareInstruments;
+    NoiseInstrument * noiseInstruments;
     AudioPattern * patterns;
     GBUInt8 initialTempo;
     AudioChain square1Chain;
     AudioChain square2Chain;
+    AudioChain noiseChain;
 } AudioComposition;
 
 typedef GBUInt8 AudioLayer;

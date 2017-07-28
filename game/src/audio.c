@@ -15,6 +15,8 @@ typedef struct {
     GBUInt8 square1PatternIndex;
     GBUInt8 square2ChainIndex;
     GBUInt8 square2PatternIndex;
+    GBUInt8 noiseChainIndex;
+    GBUInt8 noisePatternIndex;
 } AudioPlaybackState;
 
 // ===
@@ -131,10 +133,12 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
         state->square1PatternIndex = 0;
         state->square2ChainIndex = 0;
         state->square2PatternIndex = 0;
+        state->noiseChainIndex = 0;
+        state->noisePatternIndex = 0;
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlayNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
@@ -165,16 +169,52 @@ void _audioStatePlayNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8
         gbAudioTerminalRegister &= ~rightVolume;
     }
     
-    registers[0] = instrument->sweep;
-    registers[1] = instrument->pattern;
-    registers[2] = instrument->volume;
-    registers[3] = note & 0xFF;
-    registers[4] = 0x80 | (note >> 8);
+    *(registers++) = instrument->sweep;
+    *(registers++) = instrument->pattern;
+    *(registers++) = instrument->volume;
+    *(registers++) = note & 0xFF;
+    *(registers++) = 0x80 | (note >> 8);
+}
+
+void _audioStatePlayNoiseNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+    GBUInt8 patternTableIndex;
+    AudioPatternRow const * patternRow;
+    NoiseInstrument const * instrument;
+    
+    if(chainIndex == chain->numberOfRows) {
+        return;
+    }
+    
+    patternTableIndex = chain->rows[chainIndex].pattern;
+    patternRow = &(state->composition->patterns[patternTableIndex][patternIndex]);
+    instrument = &(state->composition->noiseInstruments[patternRow->instrument]);
+    
+    if(patternRow->note == 0) {
+        return;
+    }
+    
+    if(instrument->flags & 0x02) {
+        gbAudioTerminalRegister |= leftVolume;
+    } else {
+        gbAudioTerminalRegister &= ~leftVolume;
+    }
+    
+    if(instrument->flags & 0x01) {
+        gbAudioTerminalRegister |= rightVolume;
+    } else {
+        gbAudioTerminalRegister &= ~rightVolume;
+    }
+    
+    gbNoiseLengthRegister = instrument->length;
+    gbNoiseVolumeRegister = instrument->volume;
+    gbNoisePolynomialRegister = instrument->polynomial;
+    gbNoiseTriggerRegister = 0x80;
 }
 
 void _audioStatePlayNotes(AudioPlaybackState * state) {
-    _audioStatePlayNote(state, state->square1ChainIndex, state->square1PatternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01);
-    _audioStatePlayNote(state, state->square2ChainIndex, state->square2PatternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02);
+    _audioStatePlaySquareNote(state, state->square1ChainIndex, state->square1PatternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01);
+    _audioStatePlaySquareNote(state, state->square2ChainIndex, state->square2PatternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02);
+    _audioStatePlayNoiseNote(state, state->noiseChainIndex, state->noisePatternIndex, &(state->composition->noiseChain), 0x80, 0x08);
 }
 
 void _audioStateIncrement(AudioPlaybackState * state) {
@@ -196,7 +236,15 @@ void _audioStateIncrement(AudioPlaybackState * state) {
         }
     }
     
-    if(state->square1ChainIndex == state->composition->square1Chain.numberOfRows && state->square2ChainIndex == state->composition->square2Chain.numberOfRows) {
+    if(state->noiseChainIndex != state->composition->noiseChain.numberOfRows) {
+        state->noisePatternIndex++;
+        if(state->noisePatternIndex == 16) {
+            state->noisePatternIndex = 0;
+            state->noiseChainIndex++;
+        }
+    }
+    
+    if(state->square1ChainIndex == state->composition->square1Chain.numberOfRows && state->square2ChainIndex == state->composition->square2Chain.numberOfRows && state->noiseChainIndex == state->composition->noiseChain.numberOfRows) {
         state->composition = null;
     }
 }
