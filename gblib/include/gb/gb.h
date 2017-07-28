@@ -27,7 +27,7 @@
 
 #define gbInterruptsEnable() { __asm__("ei"); }
 #define gbInterruptsDisable() { __asm__("di"); }
-#define gbHalt() { __asm__("halt"); }
+#define gbHalt() { __asm__("halt\nnop"); }
 
 #define _gbMergeImpl(x,y) x##y
 #define _gbMerge(x,y) _gbMergeImpl(x,y)
