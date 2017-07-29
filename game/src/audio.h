@@ -108,20 +108,17 @@ typedef struct {
     GBUInt8 pattern;
     
     /**
-     * 00------ - No command
-     * 01--LLLL - Repeat label
-     * 10CCLLLL - Jump to label
-     * 11CCLLLL - Self repeat
+     * 0------- - No command
+     * 1-CCLLLL - Repeat label
      *
-     * LLLL - Label (0x00 - 0x0F). Repeat and self repeat commands mark where
-     *   jump commands go, while jump command specifies the label to jump to.
-     *   An audio chain can have up to 16 locations to target by jumps.
-     * CC - Repeat count (0x00 - 0x03). The repeat operation will be performed
-     *   CC + 1 times (in other words, you can repeat from 1 to 4 times).
+     * LLLL - Label (0x00 - 0x0F). The index in the chain's row table to
+     *   perform a jump to. An audio chain can have up to 16 locations to
+     *   target by jumps.
+     * CC - Repeat count (0x01 - 0x03). The repeat operation will be performed
+     *   CC + 1 times (in other words, you can repeat from 1 to 3 times, for 2
+     *   to 4 playback cycles).
      *
      * A jump command will jump to LLLL _after_ playing the current pattern.
-     * A self repeat command repeats the same pattern CC times, LLLL is
-     * provided so that jump commands can also jump to the same pattern.
      */
     GBUInt8 repeatCommand;
 } AudioChainRow;
@@ -141,9 +138,11 @@ typedef struct {
     
     /**
      * 0------- - Terminate the chain after it finishes.
-     * 1NNNNNNN - After the chain finishes, repeat starting from index NNNNNNN.
+     * 1---LLLL - After the chain finishes, repeat starting from label LLLL.
      */
     GBUInt8 infiniteRepeat;
+    
+    GBUInt8 labels[16];
 } AudioChain;
 
 typedef struct {

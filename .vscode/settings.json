@@ -14,6 +14,7 @@
         "testsong.h": "c",
         "thread_policy.h": "c",
         "audio.h": "c",
-        "vm_map.h": "c"
+        "vm_map.h": "c",
+        "mach_voucher_types.h": "c"
     }
 }

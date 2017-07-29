@@ -82,7 +82,7 @@ const AudioPattern testPatterns[] = {
 
 const AudioChainRow testRowsSquare1[] = {
     { 0, 0 },
-    { 0, 0 }
+    { 0, 0xB0 }
 };
 
 const AudioChainRow testRowsSquare2[] = {
@@ -100,7 +100,7 @@ const AudioComposition testComposition = {
     testNoiseInstruments,
     testPatterns,
     8,
-    { testRowsSquare1, 2, 0 },
-    { testRowsSquare2, 2, 0 },
-    { testRowsNoise, 2, 0 }
+    { testRowsSquare1, 2, 0, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+    { testRowsSquare2, 2, 0, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
+    { testRowsNoise, 2, 0, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 };
