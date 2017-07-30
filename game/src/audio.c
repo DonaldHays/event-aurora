@@ -36,6 +36,18 @@ typedef struct {
     AudioChannelPlaybackState noiseState;
 } AudioPlaybackState;
 
+typedef struct {
+    /**
+     * 0x00 -> default
+     * 0x01 -> vibratoUp
+     * 0x02 -> vibratoDown
+     */
+    GBUInt8 mode;
+    GBUInt8 vibratoConfiguration;
+    GBUInt8 tickCounter;
+    GBUInt16 frequency;
+} SquareFrameTickState;
+
 // ===
 // Public Constant Data
 // ===
@@ -124,6 +136,9 @@ const GBUInt16 audioNoteTable[72] = {
 AudioPlaybackState _soundPlaybackState;
 AudioPlaybackState _musicPlaybackState;
 
+SquareFrameTickState _square1FrameTickState;
+SquareFrameTickState _square2FrameTickState;
+
 // ===
 // Private API
 // ===
@@ -161,11 +176,13 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
     GBUInt16 note;
+    GBUInt8 upperCommand;
+    GBUInt8 lowerCommand;
     
     if(chainIndex == chain->numberOfRows) {
         return;
@@ -175,6 +192,8 @@ void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, G
     patternRow = &(state->composition->patterns[patternTableIndex][patternIndex]);
     instrument = &(state->composition->squareInstruments[patternRow->instrument]);
     note = audioNoteTable[patternRow->note];
+    upperCommand = (patternRow->command) >> 8;
+    lowerCommand = (patternRow->command) & 0xFF;
     
     if(patternRow->note != 0) {
         if(instrument->flags & 0x02) {
@@ -194,6 +213,15 @@ void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, G
         *(registers++) = instrument->volume;
         *(registers++) = note & 0xFF;
         *(registers++) = 0x80 | (note >> 8);
+        
+        tickState->mode = 0;
+        tickState->frequency = note;
+    }
+    
+    if((upperCommand & 0xF0) == 0xA0) {
+        tickState->mode = 1;
+        tickState->vibratoConfiguration = lowerCommand;
+        tickState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
     }
 }
 
@@ -231,8 +259,8 @@ void _audioStatePlayNoiseNote(AudioPlaybackState * state, GBUInt8 chainIndex, GB
 }
 
 void _audioStatePlayNotes(AudioPlaybackState * state) {
-    _audioStatePlaySquareNote(state, state->square1State.chainIndex, state->square1State.patternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01);
-    _audioStatePlaySquareNote(state, state->square2State.chainIndex, state->square2State.patternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02);
+    _audioStatePlaySquareNote(state, state->square1State.chainIndex, state->square1State.patternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
+    _audioStatePlaySquareNote(state, state->square2State.chainIndex, state->square2State.patternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
     _audioStatePlayNoiseNote(state, state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), 0x80, 0x08);
 }
 
@@ -337,6 +365,30 @@ void _audioUpdatePlaybackState(AudioPlaybackState * state) {
     } banksROMSet(originalBank);
 }
 
+void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequencyRegisters) {
+    if(state->mode == 1) {
+        state->tickCounter--;
+        if(state->tickCounter == 0) {
+            state->tickCounter = state->vibratoConfiguration >> 4;
+            state->mode = 2;
+        } else {
+            state->frequency += state->vibratoConfiguration & 0x0F;
+            frequencyRegisters[0] = state->frequency & 0xFF;
+            frequencyRegisters[1] = state->frequency >> 8;
+        }
+    } else if(state->mode == 2) {
+        state->tickCounter--;
+        if(state->tickCounter == 0) {
+            state->tickCounter = state->vibratoConfiguration >> 4;
+            state->mode = 1;
+        } else {
+            state->frequency -= state->vibratoConfiguration & 0x0F;
+            frequencyRegisters[0] = state->frequency & 0xFF;
+            frequencyRegisters[1] = state->frequency >> 8;
+        }
+    }
+}
+
 // ===
 // Public API
 // ===
@@ -346,11 +398,17 @@ void audioInit() {
     _audioInitPlaybackState(&_soundPlaybackState);
     _audioInitPlaybackState(&_musicPlaybackState);
     
+    _square1FrameTickState.mode = 0;
+    _square2FrameTickState.mode = 0;
+    
     _soundPlaybackState.layer = audioLayerSound;
     _musicPlaybackState.layer = audioLayerMusic;
 }
 
 void audioUpdate() {
+    _updateSquareFrameTickState(&_square1FrameTickState, &gbTone1FrequencyLowRegister);
+    _updateSquareFrameTickState(&_square2FrameTickState, &gbTone2FrequencyLowRegister);
+    
     _audioUpdatePlaybackState(&_soundPlaybackState);
     _audioUpdatePlaybackState(&_musicPlaybackState);
 }

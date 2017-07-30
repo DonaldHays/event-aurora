@@ -95,6 +95,13 @@ typedef struct {
     
     /**
      * A command.
+     *
+     * The first nibble defines the command.
+     *
+     * A - Set note vibrato.
+     *   A-TS
+     *   T - Time. A full oscillation will last 2 * T frames.
+     *   S - Steps. Larger values produce larger amplitudes.
      */
     GBUInt16 command;
 } AudioPatternRow;
