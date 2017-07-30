@@ -290,6 +290,18 @@ void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, Audio
             }
         }
     }
+    
+    if(channelState->chainIndex == chain->numberOfRows) {
+        // We have reached the end of the chain.
+        
+        if(chain->infiniteRepeat & 0x80) {
+            // We're repeating infinitely, find the label index.
+            repeatIndex = chain->infiniteRepeat & 0x0F;
+            
+            // Jump to the label.
+            channelState->chainIndex = chain->labels[repeatIndex];
+        }
+    }
 }
 
 void _audioStateIncrement(AudioPlaybackState * state) {
