@@ -5,22 +5,23 @@
   "isShellCommand": true,
   "args": [],
   "showOutput": "always",
-  "problemMatcher": {
-    "owner": "cpp",
-    "fileLocation": ["relative", "${workspaceRoot}"],
-    "pattern": {
-      "regexp": "^(.*):(\\d+):\\s+(.*)$",
-      "file": 1,
-      "line": 2,
-      "message": 3
-    }
-  },
   "tasks": [
     {
       "taskName": "make",
       "command": "make",
       "isBuildCommand": true,
-      "args" : []
+      "args" : [],
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):\\s+(warning|error) [0-9]+:\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "severity": 3,
+          "message": 4
+        }
+      }
     },
     {
       "taskName": "clean",

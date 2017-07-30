@@ -139,6 +139,9 @@ AudioPlaybackState _musicPlaybackState;
 SquareFrameTickState _square1FrameTickState;
 SquareFrameTickState _square2FrameTickState;
 
+AudioPlaybackState * _updatingState;
+AudioComposition const * _updatingComposition;
+
 // ===
 // Private API
 // ===
@@ -176,7 +179,7 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
+void _audioStatePlaySquareNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
@@ -189,8 +192,8 @@ void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, G
     }
     
     patternTableIndex = chain->rows[chainIndex].pattern;
-    patternRow = &(state->composition->patterns[patternTableIndex][patternIndex]);
-    instrument = &(state->composition->squareInstruments[patternRow->instrument]);
+    patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
+    instrument = &(_updatingComposition->squareInstruments[patternRow->instrument]);
     note = audioNoteTable[patternRow->note];
     upperCommand = (patternRow->command) >> 8;
     lowerCommand = (patternRow->command) & 0xFF;
@@ -225,7 +228,7 @@ void _audioStatePlaySquareNote(AudioPlaybackState * state, GBUInt8 chainIndex, G
     }
 }
 
-void _audioStatePlayNoiseNote(AudioPlaybackState * state, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 leftVolume, GBUInt8 rightVolume) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     NoiseInstrument const * instrument;
@@ -235,8 +238,8 @@ void _audioStatePlayNoiseNote(AudioPlaybackState * state, GBUInt8 chainIndex, GB
     }
     
     patternTableIndex = chain->rows[chainIndex].pattern;
-    patternRow = &(state->composition->patterns[patternTableIndex][patternIndex]);
-    instrument = &(state->composition->noiseInstruments[patternRow->instrument]);
+    patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
+    instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
     
     if(patternRow->note != 0) {
         if(instrument->flags & 0x02) {
@@ -258,10 +261,12 @@ void _audioStatePlayNoiseNote(AudioPlaybackState * state, GBUInt8 chainIndex, GB
     }
 }
 
-void _audioStatePlayNotes(AudioPlaybackState * state) {
-    _audioStatePlaySquareNote(state, state->square1State.chainIndex, state->square1State.patternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
-    _audioStatePlaySquareNote(state, state->square2State.chainIndex, state->square2State.patternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
-    _audioStatePlayNoiseNote(state, state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), 0x80, 0x08);
+void _audioStatePlayNotes() {
+    AudioPlaybackState * state = _updatingState;
+    
+    _audioStatePlaySquareNote(state->square1State.chainIndex, state->square1State.patternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
+    _audioStatePlaySquareNote(state->square2State.chainIndex, state->square2State.patternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
+    _audioStatePlayNoiseNote(state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), 0x80, 0x08);
 }
 
 void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, AudioChain const * chain) {
@@ -332,36 +337,38 @@ void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, Audio
     }
 }
 
-void _audioStateIncrement(AudioPlaybackState * state) {
+void _audioStateIncrement() {
+    AudioPlaybackState * state = _updatingState;
+    
     state->tempoTimer = state->tempo;
     
-    _audioIncrementChannelState(&state->square1State, &state->composition->square1Chain);
-    _audioIncrementChannelState(&state->square2State, &state->composition->square2Chain);
-    _audioIncrementChannelState(&state->noiseState, &state->composition->noiseChain);
+    _audioIncrementChannelState(&state->square1State, &_updatingComposition->square1Chain);
+    _audioIncrementChannelState(&state->square2State, &_updatingComposition->square2Chain);
+    _audioIncrementChannelState(&state->noiseState, &_updatingComposition->noiseChain);
     
-    if(state->square1State.chainIndex == state->composition->square1Chain.numberOfRows && state->square2State.chainIndex == state->composition->square2Chain.numberOfRows && state->noiseState.chainIndex == state->composition->noiseChain.numberOfRows) {
+    if(state->square1State.chainIndex == _updatingComposition->square1Chain.numberOfRows && state->square2State.chainIndex == _updatingComposition->square2Chain.numberOfRows && state->noiseState.chainIndex == _updatingComposition->noiseChain.numberOfRows) {
         state->composition = null;
     }
 }
 
-void _audioUpdatePlaybackState(AudioPlaybackState * state) {
+void _audioUpdatePlaybackState() {
     GBUInt8 originalBank;
     
     // If there's no composition, this state is idle.
-    if(state->composition == null) {
+    if(_updatingComposition == null) {
         return;
     }
     
     // If we're between ticks, decrease tempo timer and return.
-    if(state->tempoTimer != 0) {
-        state->tempoTimer--;
+    if(_updatingState->tempoTimer != 0) {
+        _updatingState->tempoTimer--;
         return;
     }
     
     originalBank = banksROMGet();
-    banksROMSet(state->romBank); {
-        _audioStatePlayNotes(state);
-        _audioStateIncrement(state);
+    banksROMSet(_updatingState->romBank); {
+        _audioStatePlayNotes();
+        _audioStateIncrement();
     } banksROMSet(originalBank);
 }
 
@@ -409,8 +416,13 @@ void audioUpdate() {
     _updateSquareFrameTickState(&_square1FrameTickState, &gbTone1FrequencyLowRegister);
     _updateSquareFrameTickState(&_square2FrameTickState, &gbTone2FrequencyLowRegister);
     
-    _audioUpdatePlaybackState(&_soundPlaybackState);
-    _audioUpdatePlaybackState(&_musicPlaybackState);
+    _updatingState = &_soundPlaybackState;
+    _updatingComposition = _updatingState->composition;
+    _audioUpdatePlaybackState();
+    
+    _updatingState = &_musicPlaybackState;
+    _updatingComposition = _updatingState->composition;
+    _audioUpdatePlaybackState();
 }
 
 void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioLayer layer, GBUInt8 priority) {
