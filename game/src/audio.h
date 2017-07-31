@@ -134,7 +134,7 @@ typedef struct {
     /**
      * Pointer to a list of `AudioChainRow` values.
      */
-    AudioChainRow * rows;
+    AudioChainRow rows[64];
     
     /**
      * The count of `rows`. The chain terminates after playing the final row if
@@ -153,13 +153,13 @@ typedef struct {
 } AudioChain;
 
 typedef struct {
-    SquareInstrument * squareInstruments;
-    NoiseInstrument * noiseInstruments;
-    AudioPattern * patterns;
+    SquareInstrument squareInstruments[16];
+    NoiseInstrument noiseInstruments[16];
     GBUInt8 initialTempo;
     AudioChain square1Chain;
     AudioChain square2Chain;
     AudioChain noiseChain;
+    AudioPattern patterns[];
 } AudioComposition;
 
 typedef GBUInt8 AudioLayer;

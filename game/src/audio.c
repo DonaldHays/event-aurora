@@ -193,29 +193,20 @@ void _audioStatePlaySquareNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCh
     
     patternTableIndex = chain->rows[chainIndex].pattern;
     patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
-    instrument = &(_updatingComposition->squareInstruments[patternRow->instrument]);
     note = audioNoteTable[patternRow->note];
+    instrument = &(_updatingComposition->squareInstruments[patternRow->instrument]);
     upperCommand = (patternRow->command) >> 8;
     lowerCommand = (patternRow->command) & 0xFF;
     
     if(patternRow->note != 0) {
-        if(instrument->flags & 0x02) {
-            gbAudioTerminalRegister |= leftVolume;
-        } else {
-            gbAudioTerminalRegister &= ~leftVolume;
-        }
+        gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
+        gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
         
-        if(instrument->flags & 0x01) {
-            gbAudioTerminalRegister |= rightVolume;
-        } else {
-            gbAudioTerminalRegister &= ~rightVolume;
-        }
-        
-        *(registers++) = instrument->sweep;
-        *(registers++) = instrument->pattern;
-        *(registers++) = instrument->volume;
-        *(registers++) = note & 0xFF;
-        *(registers++) = 0x80 | (note >> 8);
+        registers[0] = instrument->sweep;
+        registers[1] = instrument->pattern;
+        registers[2] = instrument->volume;
+        registers[3] = note & 0xFF;
+        registers[4] = 0x80 | (note >> 8);
         
         tickState->mode = 0;
         tickState->frequency = note;
@@ -242,17 +233,8 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
     instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
     
     if(patternRow->note != 0) {
-        if(instrument->flags & 0x02) {
-            gbAudioTerminalRegister |= leftVolume;
-        } else {
-            gbAudioTerminalRegister &= ~leftVolume;
-        }
-        
-        if(instrument->flags & 0x01) {
-            gbAudioTerminalRegister |= rightVolume;
-        } else {
-            gbAudioTerminalRegister &= ~rightVolume;
-        }
+        gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
+        gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
         
         gbNoiseLengthRegister = instrument->length;
         gbNoiseVolumeRegister = instrument->volume;
