@@ -41,11 +41,15 @@ typedef struct {
      * 0x00 -> default
      * 0x01 -> vibratoUp
      * 0x02 -> vibratoDown
+     * 0x03 -> arpeggio
      */
     GBUInt8 mode;
     GBUInt8 vibratoConfiguration;
     GBUInt8 tickCounter;
     GBUInt16 frequency;
+    GBUInt8 note;
+    GBUInt8 arpeggioStepsSecond;
+    GBUInt8 arpeggioStepsThird;
 } SquareFrameTickState;
 
 // ===
@@ -210,12 +214,20 @@ void _audioStatePlaySquareNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCh
         
         tickState->mode = 0;
         tickState->frequency = note;
+        tickState->note = patternRow->note;
     }
     
     if((upperCommand & 0xF0) == 0xA0) {
+        // Vibratto
         tickState->mode = 1;
         tickState->vibratoConfiguration = lowerCommand;
         tickState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
+    } else if((upperCommand & 0xF0) == 0xB0) {
+        // Arpeggio
+        tickState->mode = 3;
+        tickState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
+        tickState->arpeggioStepsThird = (lowerCommand & 0x0F);
+        tickState->tickCounter = 0;
     }
 }
 
@@ -355,7 +367,10 @@ void _audioUpdatePlaybackState() {
 }
 
 void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequencyRegisters) {
+    GBUInt16 frequency;
+    
     if(state->mode == 1) {
+        // Vibratto Increment
         state->tickCounter--;
         if(state->tickCounter == 0) {
             state->tickCounter = state->vibratoConfiguration >> 4;
@@ -366,6 +381,7 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
             frequencyRegisters[1] = state->frequency >> 8;
         }
     } else if(state->mode == 2) {
+        // Vibratto Decrement
         state->tickCounter--;
         if(state->tickCounter == 0) {
             state->tickCounter = state->vibratoConfiguration >> 4;
@@ -375,6 +391,23 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
             frequencyRegisters[0] = state->frequency & 0xFF;
             frequencyRegisters[1] = state->frequency >> 8;
         }
+    } else if(state->mode == 3) {
+        // Arpeggio
+        state->tickCounter++;
+        if(state->tickCounter == 3) {
+            state->tickCounter = 0;
+        }
+        
+        if((state->tickCounter) == 0) {
+            frequency = audioNoteTable[state->note];
+        } else if((state->tickCounter) == 1) {
+            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond];
+        } else {
+            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond + state->arpeggioStepsThird];
+        }
+        
+        frequencyRegisters[0] = frequency & 0xFF;
+        frequencyRegisters[1] = (frequency >> 8);
     }
 }
 

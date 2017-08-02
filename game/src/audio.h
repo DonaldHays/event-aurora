@@ -102,6 +102,10 @@ typedef struct {
      *   A-TS
      *   T - Time. A full oscillation will last 2 * T frames.
      *   S - Steps. Larger values produce larger amplitudes.
+     * B - Set arpeggio.
+     *   B-12
+     *   1 - Steps from first to second note in chord
+     *   2 - Steps from second to third note in chord
      */
     GBUInt16 command;
 } AudioPatternRow;
