@@ -351,7 +351,7 @@ function writeImplementation() {
   output.push("// IMPORTANT: Tool-generated file. Do not modify.");
   output.push("");
   
-  output.push(`#include "${songName}.h"`);
+  output.push(`#include "${path.basename(outputHeaderPath)}"`);
   output.push("");
   
   if(song.bank !== null) {

@@ -21,7 +21,7 @@ BA 2
 #  Name    SR SD SA P  L IV VD VA  F
 SI Square1  0  0  0 1 00 15  0  4 LR
 SI Square2  0  0  0 2 00  7  0  4 LR
-SI Square3  0  0  0 0 00 15  0  5 LR
+SI Square3  0  0  0 2 00 15  0  5 LR
 SI SquareL  0  0  0 0 00 15  0  4 L
 SI SquareR  0  0  0 0 00 15  0  4 R
 
@@ -87,19 +87,19 @@ PA Melody2
    - - -
 
 PA Bass1
-  C3 Square3 A 4 3
+  D2 Square3 A 4 3
    - - -
    - - -
    - - -
-  C3 Square3 A 4 3
+  D2 Square3 A 4 3
    - - -
    - - -
    - - -
-  C3 Square3 A 4 3
+  D2 Square3 A 4 3
    - - -
    - - -
    - - -
-  C3 Square3 A 4 3
+  D2 Square3 A 4 3
    - - -
    - - -
    - - -

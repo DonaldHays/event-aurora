@@ -29,8 +29,9 @@ BANK1_GFX = \
 	game/data/gfx/font.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
-BANK2_SRCS = \
-	game/src/bank2/testSong.c
+BANK2_SONGS = \
+	game/data/music/testSong.txt
+BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
 
 GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS)
 
@@ -90,6 +91,10 @@ game/obj/dependencies: $(GAME_SRCS)
 game/src/data/strings.c: game/data/strings.json
 	$(ENSURE_DIRECTORY)
 	node stringc -b 1 game/data/stringsMap.json $< $@
+
+game/src/data/music_%.c: game/data/music/%.txt
+	$(ENSURE_DIRECTORY)
+	node musicc $< $@
 
 game/src/data/gfx_%.c: game/data/gfx/%.png
 	$(ENSURE_DIRECTORY)
