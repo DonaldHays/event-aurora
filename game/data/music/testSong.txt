@@ -1,0 +1,142 @@
+# Initial Tempo - Ticks per beat
+IT 8
+
+# Bank - The ROM bank the song will be stored in
+BA 2
+
+# ===
+# Square Instruments
+# ===
+
+# SR - Sweep Rate, 0-7
+# SD - Sweep Direction, 0-1. 1 to increase
+# SA - Sweep Amount, 0-7. Larger values for bigger jumps
+# P  - Pattern, 0-3. 0 for 12.5%, 1 for 25%, 2 for 50%, 3 for 75%
+# L  - Length, 0-63. Length = (L / 63) * 0.25 seconds
+# IV - Initial Volume, 0-15
+# VD - Volume Direction, 0-1. 1 to increase
+# VA - Volume Amount, 0-7. Larger values for bigger jumps
+# F  - Flags. L, R, -.
+
+#  Name    SR SD SA P  L IV VD VA  F
+SI Square1  0  0  0 1 00 15  0  4 LR
+SI Square2  0  0  0 2 00  7  0  4 LR
+SI Square3  0  0  0 0 00 15  0  5 LR
+SI SquareL  0  0  0 0 00 15  0  4 L
+SI SquareR  0  0  0 0 00 15  0  4 R
+
+# ===
+# Noise Instruments
+# ===
+
+# L  - Length, 0-63. Length = (L / 63) * 0.25 seconds
+# IV - Initial Volume, 0-15
+# VD - Volume Direction, 0-1. 1 to increase
+# VA - Volume Amount, 0-7. Larger values for bigger jumps
+# CS - Clock Shift, 0-15. Larger values are "dirtier". Too large breaks it
+# W  - Width mode, 0-1. 0 for noise, 1 for buzz
+# DC - Divisor code, 0-7. Larger values yield higher frequencies
+# F  - Flags. L, R
+
+#  Name     L IV VD VA CS W DC  F
+NI Crash   00 10  0  6 03 0  4 LR
+
+# ===
+# Patterns
+# ===
+
+# Commands:
+# V T S, Vibratto, oscillation takes 2 * T frames, with S steps each frame.
+# A X Y, Arpeggio, second note is X steps from first note, third is Y from
+#        second.
+
+PA Melody1
+  C4 Square1 V 8 1
+   - - -
+   - - -
+  E4 Square2 -
+  E4 Square1 V 8 1
+   - - -
+   - - -
+  G4 Square2 -
+  G4 Square1 V 8 1
+   - - -
+   - - -
+  E4 Square2 -
+  E4 Square1 V 8 1
+   - - -
+   - - -
+   - - -
+
+PA Melody2
+  C4 Square1 V 8 1
+   - - -
+   - - -
+  E4 Square2 -
+  E4 Square1 V 8 1
+   - - -
+   - - -
+  G4 Square2 -
+  A4 Square1 V 8 1
+   - - -
+  G4 Square1 -
+  E4 Square2 -
+  E4 Square1 V 8 1
+   - - -
+   - - -
+   - - -
+
+PA Bass1
+  C3 Square3 A 4 3
+   - - -
+   - - -
+   - - -
+  C3 Square3 A 4 3
+   - - -
+   - - -
+   - - -
+  C3 Square3 A 4 3
+   - - -
+   - - -
+   - - -
+  C3 Square3 A 4 3
+   - - -
+   - - -
+   - - -
+
+PA Drum1
+  P Crash -
+  - - -
+  - - -
+  - - -
+  P Crash -
+  - - -
+  - - -
+  - - -
+  P Crash -
+  - - -
+  P Crash -
+  P Crash -
+  P Crash -
+  - - -
+  - - -
+  - - -
+
+# ===
+# Chains
+# ===
+
+CH Square1 R Start
+  Start: Melody1 Start 3
+         Melody2 Start 2
+EC
+
+CH Square2 NR
+  Start: Bass1 Start 4
+    End: Bass1 End 4
+EC
+
+CH Noise NR
+  Start: Drum1 Start 4
+    End: Drum1 End 4
+EC

@@ -1,0 +1,8 @@
+{
+  "name" : "musicc",
+  "version" : "1.0.0",
+  "main": "musicc",
+  "dependencies" : {
+    "commander" : "~2.9.0"
+  }
+}
