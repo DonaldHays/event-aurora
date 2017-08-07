@@ -418,10 +418,10 @@ function writeImplementation() {
   [song.chains["Square1"], song.chains["Square2"], song.chains["Noise"]].forEach((chain) => {
     if(chain === undefined) {
       output.push(`  { // Undefined Chain Filler`);
-      output.push(`    {},`);
+      output.push(`    { { 0x00 } },`);
       output.push(`    0x00,`);
       output.push(`    0x00,`);
-      output.push(`    {}`);
+      output.push(`    { 0x00 }`);
       output.push(`  },`);
       return;
     }
@@ -449,6 +449,9 @@ function writeImplementation() {
       output.push(`    0x${formatter.toHex(repeatCommand)}, // Infinite repeat`);
     } else {
       output.push(`    0x00, // Don't infinite repeat`);
+    }
+    if(chain.labels.length == 0) {
+      chain.labels.push(0);
     }
     output.push(`    { ${chain.labels.map((label) => { return `0x${formatter.toHex(label)}` }).join(", ")} } // Labels`);
     output.push(`  },`);

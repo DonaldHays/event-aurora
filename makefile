@@ -30,7 +30,8 @@ BANK1_GFX = \
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
 BANK2_SONGS = \
-	game/data/music/testSong.txt
+	game/data/music/testSong.txt \
+	game/data/music/titleSong.txt
 BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
 
 GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS)

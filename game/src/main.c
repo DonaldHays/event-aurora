@@ -3,7 +3,7 @@
 #include "audio.h"
 #include "banks.h"
 #include "rand.h"
-#include "data/music_testSong.h"
+#include "data/music_titleSong.h"
 
 // ===
 // Private Variables
@@ -82,7 +82,7 @@ void main() {
     _initializeInterruptHandlers();
     
     modulesCurrentSet(&mainMenuModule);
-    audioPlayComposition(&testSong, testSongBank, audioLayerMusic, 0);
+    audioPlayComposition(&titleSong, titleSongBank, audioLayerMusic, 0);
     
     while(true) {
         _waitForVBlank();
