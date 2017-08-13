@@ -18,10 +18,11 @@ BA 2
 # VA - Volume Amount, 0-7. Larger values for bigger jumps
 # F  - Flags. L, R, -.
 
-#  Name    SR SD SA P  L IV VD VA  F
-SI Square1  0  0  0 1 00 15  0  4 LR
-SI Square1S 0  0  0 1 00 15  0  2 LR
-SI Square2  0  0  0 1 00 10  0  4  R
+#  Name        SR SD SA P  L IV VD VA  F
+SI Square1      0  0  0 1 00 15  0  4 LR
+SI Square1S     0  0  0 1 00 15  0  2 LR
+SI Square2      0  0  0 1 00 10  0  4  R
+SI Square1Ramp  0  0  0 1 00 05  1  1 LR
 
 # ===
 # Noise Instruments
@@ -73,80 +74,231 @@ PA Silence
   - - -
   - - -
 
-PA Melody1
+PA Harmony1
+  C3 Square1 -
+  Eb3 Square2 -
+  D3 Square1 -
+  C3 Square2 -
+  
+  Eb3 Square1 -
+  D3 Square2 -
+  F3 Square1 -
+  Eb3 Square2 -
+  
+  A#3 Square1 -
+  F3 Square2 -
+  F3 Square1 -
+  A#3 Square2 -
+  
+  G3 Square1 -
+  F3 Square2 -
+  Eb3 Square1 -
+  G3 Square2 -
+
+PA Harmony2
+  Eb3 Square1 -
+  G3 Square2 -
+  F3 Square1 -
+  Eb3 Square2 -
+  
+  G3 Square1 -
+  F3 Square2 -
+  A#3 Square1 -
+  F3 Square2 -
+  
+  Eb4 Square1 -
+  F3 Square2 -
+  C4 Square1 -
+  Eb4 Square2 -
+  
+  D4 Square1 -
+  C4 Square2 -
   B3 Square1 -
+  D4 Square2 -
+
+PA Melody1
+  C4 Square1Ramp -
   - - -
-  D4 Square1 -
-  Gb4 Square1 -
+  - - -
+  - - -
   
-  G#4 Square1 -
+  - - V 8 1
   - - -
-  D4 Square1 -
-  Gb4 Square1 -
+  - - -
+  - - -
   
-  G#4 Square1 -
   - - -
-  D4 Square1 -
-  Gb4 Square1 -
+  - - -
+  - - -
+  - - -
   
-  A4 Square1S -
-  - - V 6 1
+  D4 Square1 -
   - - -
+  Eb4 Square1 -
   - - -
 
-PA Harmony1
+PA Melody2
+  G4 Square1 -
   - - -
   - - -
-  B3 Square2 -
-  - - -
-  
-  D4 Square2 -
-  Gb4 Square2 -
-  G#4 Square2 -
   - - -
   
-  D4 Square2 -
-  Gb4 Square2 -
-  G#4 Square2 -
+  Eb4 Square1 -
+  - - -
+  - - -
   - - -
   
-  D4 Square2 -
-  Gb4 Square2 -
-  A4 Square2 -
-  - - V 6 1
+  G#4 Square1 -
+  - - -
+  - - -
+  - - -
+  
+  G4 Square1 -
+  - - -
+  - - -
+  - - -
+  
+PA Melody3
+  Eb5 Square1 -
+  - - -
+  D5 Square1 -
+  - - -
+  
+  C5 Square1 -
+  - - -
+  C5 Square1 -
+  - - -
+  
+  G5 Square1 -
+  - - V 8 1
+  - - -
+  - - -
+  
+  C5 Square1 -
+  - - -
+  C5 Square1 -
+  - - -
+
+PA Melody4
+  F5 Square1 -
+  - - V 8 1
+  - - -
+  - - -
+  
+  C5 Square1 -
+  - - -
+  C5 Square1 -
+  - - -
+  
+  D5 Square1 -
+  - - -
+  C5 Square1 -
+  - - -
+  
+  B4 Square1 -
+  - - -
+  G4 Square1 -
+  - - -
 
 PA Drum1
+  P Hat -
+  - - -
+  - - -
+  - - -
+  
+  P Hat -
+  - - -
+  - - -
+  - - -
+  
+  P Hat -
+  - - -
+  - - -
+  P Hat -
+  
+  P Hat -
+  - - -
+  - - -
+  P Hat -
+  
+PA Drum2
   P Snare -
   - - -
-  P LKick -
-  P RKick -
+  P Hat -
+  P Hat -
+  
   P Snare -
   - - -
-  P LKick -
-  P RKick -
+  P Hat -
+  P Hat -
+  
   P Snare -
   - - -
-  P LKick -
-  P RKick -
+  P Hat -
   P Snare -
+  
   P Snare -
-  P LKick -
+  - - -
   P Snare -
+  P Hat -
 
 # ===
 # Chains
 # ===
 
-CH Square1 NR
-  Start: Melody1
-  Silence Start 2
-EC
-
-CH Square2 NR
+CH Square1 R Start
   Start: Harmony1
-  Silence Start 2
+  Harmony2
+  Harmony1
+  Harmony2
+  Harmony1
+  Harmony2
+  Harmony1
+  Harmony2
+  Harmony1
+  Harmony2
+  Harmony1
+  Harmony2
+  Silence
+  Silence
+  Silence
+  Silence
 EC
 
-CH Noise NR
-  Start: Drum1 Start 4
+CH Square2 R Start
+  Start: Silence
+  Silence
+  Silence
+  Silence
+  Melody1
+  Melody2
+  Melody1
+  Melody2
+  Melody3
+  Melody4
+  Melody3
+  Melody4
+  Melody1
+  Melody2
+  Melody1
+  Melody2
+EC
+
+CH Noise R Start
+  Start: Drum1
+  Drum1
+  Drum1
+  Drum1
+  Drum2
+  Drum2
+  Drum2
+  Drum2
+  Drum1
+  Drum1
+  Drum2
+  Drum2
+  Drum2
+  Drum1
+  Drum2
+  Drum1
 EC
