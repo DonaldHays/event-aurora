@@ -20,9 +20,9 @@ BA 2
 
 #  Name        SR SD SA P  L IV VD VA  F
 SI Square1      0  0  0 1 00 15  0  4 LR
-SI Square1S     0  0  0 1 00 15  0  2 LR
-SI Square2      0  0  0 1 00 10  0  4  R
-SI Square1Ramp  0  0  0 1 00 05  1  1 LR
+SI Square2      0  0  0 2 00 10  0  4  R
+SI Square1S     0  0  0 2 00 15  0  4 LR
+SI Square1Ramp  0  0  0 2 00 05  1  1 LR
 
 # ===
 # Noise Instruments
@@ -132,72 +132,72 @@ PA Melody1
   - - -
   - - -
   
-  D4 Square1 -
+  D4 Square1S -
   - - -
-  Eb4 Square1 -
+  Eb4 Square1S -
   - - -
 
 PA Melody2
-  G4 Square1 -
+  G4 Square1S -
   - - -
   - - -
   - - -
   
-  Eb4 Square1 -
+  Eb4 Square1S -
   - - -
   - - -
   - - -
   
-  G#4 Square1 -
+  G#4 Square1S -
   - - -
   - - -
   - - -
   
-  G4 Square1 -
+  G4 Square1S -
   - - -
   - - -
   - - -
   
 PA Melody3
-  Eb5 Square1 -
+  Eb5 Square1S -
   - - -
-  D5 Square1 -
-  - - -
-  
-  C5 Square1 -
-  - - -
-  C5 Square1 -
+  D5 Square1S -
   - - -
   
-  G5 Square1 -
+  C5 Square1S -
+  - - -
+  C5 Square1S -
+  - - -
+  
+  G5 Square1S -
   - - V 8 1
   - - -
   - - -
   
-  C5 Square1 -
+  C5 Square1S -
   - - -
-  C5 Square1 -
+  C5 Square1S -
   - - -
 
 PA Melody4
-  F5 Square1 -
+  F5 Square1S -
   - - V 8 1
   - - -
   - - -
   
-  C5 Square1 -
+  C5 Square1S -
   - - -
-  C5 Square1 -
-  - - -
-  
-  D5 Square1 -
-  - - -
-  C5 Square1 -
+  C5 Square1S -
   - - -
   
-  B4 Square1 -
+  D5 Square1S -
   - - -
-  G4 Square1 -
+  C5 Square1S -
+  - - -
+  
+  B4 Square1S -
+  - - -
+  G4 Square1S -
   - - -
 
 PA Drum1
