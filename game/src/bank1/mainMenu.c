@@ -1,6 +1,6 @@
 #include "mainMenu.h"
 #include "../memory.h"
-#include "../text.h"
+#include "../data/gfx_titleTiles.h"
 
 #pragma bank 1
 
@@ -8,8 +8,7 @@
 // Public API
 // ===
 void mainMenuInit() {
-    textLoadFont(gbTileMemory, false);
-    memorySet(gbTileMap0, 0x54, gbTileMapWidth * gbTileMapHeight);
+    memoryCopyBanked(gbTileMemory, titleTiles, titleTilesLength, titleTilesBank);
 }
 
 void mainMenuWake() {

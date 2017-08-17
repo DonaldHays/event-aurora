@@ -26,7 +26,8 @@ BANK1_STRINGS = game/data/strings.json
 BANK1_SRCS += game/src/data/strings.c
 
 BANK1_GFX = \
-	game/data/gfx/font.png
+	game/data/gfx/font.png \
+	game/data/gfx/titleTiles.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
 BANK2_SONGS = \

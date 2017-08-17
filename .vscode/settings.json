@@ -16,6 +16,8 @@
         "audio.h": "c",
         "vm_map.h": "c",
         "mach_voucher_types.h": "c",
-        "music_testsong.h": "c"
+        "music_testsong.h": "c",
+        "gfx_titletiles.h": "c",
+        "mainmenu.h": "c"
     }
 }
