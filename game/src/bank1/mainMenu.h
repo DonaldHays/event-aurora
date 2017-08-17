@@ -5,6 +5,7 @@
 
 void mainMenuInit();
 void mainMenuWake();
+void mainMenuSuspend();
 void mainMenuUpdate();
 void mainMenuUpdateGraphics();
 

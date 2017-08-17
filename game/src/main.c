@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "banks.h"
 #include "rand.h"
+#include "palette.h"
 #include "data/music_titleSong.h"
 
 // ===
@@ -23,7 +24,9 @@ volatile GBBool _hasEnteredVBlank;
  * `true`.
  */
 void _vblank() {
-    _hasEnteredVBlank = true;
+    if(((gbLCDStatusRegister & 0x03) == 0x01) && ((gbLCDYCoordinateRegister == 144))) {
+        _hasEnteredVBlank = true;
+    }
 }
 
 /**
@@ -37,8 +40,9 @@ void _initializeMainMemory() {
  * Installs and activates the interrupt handlers.
  */
 void _initializeInterruptHandlers() {
+    gbLCDInterruptHandler = null;
     gbVBlankInterruptHandler = &_vblank;
-    gbActiveInterruptsRegister = gbActiveInterruptFlagVBlank;
+    gbActiveInterruptsRegister = gbActiveInterruptFlagVBlank | gbActiveInterruptFlagLCD;
     
     gbInterruptsEnable();
 }
@@ -51,8 +55,11 @@ void _initializeSubsystems() {
     // (especially the module subsystem) are initialized, allowing them to
     // freely write to video memory.
     gbLCDDisable(); {
+        gbLCDControlRegister &= 0xEF;
+        
         randomInit();
         banksInit();
+        paletteInit();
         audioInit();
         modulesInit();
     } gbLCDEnable();
@@ -88,6 +95,7 @@ void main() {
         _waitForVBlank();
         
         modulesUpdateGraphics();
+        paletteUpdateGraphics();
         audioUpdate();
         gbJoypadStateUpdate();
         modulesUpdate();

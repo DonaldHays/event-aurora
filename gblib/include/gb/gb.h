@@ -6,10 +6,10 @@
 #include "interrupts.h"
 #include "joypad.h"
 
-#define gbTileMemory ((volatile void *)0x8000)
-#define gbTileMap0 ((volatile void *)0x9800)
-#define gbTileMap1 ((volatile void *)0x9C00)
-#define gbSRAM ((volatile void *)0xA000)
+#define gbTileMemory ((volatile GBUInt8 *)0x8000)
+#define gbTileMap0 ((volatile GBUInt8 *)0x9800)
+#define gbTileMap1 ((volatile GBUInt8 *)0x9C00)
+#define gbSRAM ((volatile GBUInt8 *)0xA000)
 
 #define gbTileMapWidth 32
 #define gbTileMapHeight 32

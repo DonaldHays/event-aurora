@@ -37,6 +37,12 @@ typedef struct {
      * found. Set to 0 if they're in the home bank.
      */
     GBUInt8 romBank;
+    
+    /**
+     * 0 - Do nothing.
+     * 1 - Title screen scrolling clouds.
+     */
+    GBUInt8 lcdInterruptMode;
 } Module;
 
 extern const Module mainMenuModule;
