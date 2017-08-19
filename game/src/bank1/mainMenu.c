@@ -1,6 +1,7 @@
 #include "mainMenu.h"
 #include "../memory.h"
 #include "../sprites.h"
+#include "../palette.h"
 #include "../data/gfx_titleTiles.h"
 #include "../data/music_titleSong.h"
 
@@ -12,14 +13,99 @@
 #define _mainMenuPressStartY 136
 #define _mainMenuPressStartCycleDuration 120
 
+#define _mainMenuFadeStateFadingIn 1
+#define _mainMenuFadeStateIdle 2
+#define _mainMenuFadeStateFadingOut 3
+
+#define _mainMenuMakeFadeState(state, timer) (((timer) << 4) | (state))
+#define _mainMenuFadeStateTimer() (_mainMenuFadeRegister >> 4)
+#define _mainMenuFadeStateState() (_mainMenuFadeRegister & 0x0F)
+
 // ===
 // Private Variables
 // ===
 GBUInt8 _mainMenuPressStartCycle;
 
+/**
+ * TTTTSSSS
+ * TTTT - Timer for current state
+ * SSSS - Current state
+ */
+GBUInt8 _mainMenuFadeRegister;
+
 // ===
 // Private API
 // ===
+void _mainMenuBeginFadeIn() {
+    _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateFadingIn, 15);
+}
+
+void _mainMenuBeginFadeOut() {
+    _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateFadingOut, 15);
+}
+
+void _mainMenuUpdateFadeState() {
+    GBUInt8 state, timer;
+    
+    state = _mainMenuFadeStateState();
+    timer = _mainMenuFadeStateTimer();
+    
+    switch(state) {
+    case _mainMenuFadeStateFadingIn:
+        if(timer > 8) {
+            backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+        } else {
+            backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+        }
+        
+        timer--;
+        
+        if(timer == 0) {
+            _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateIdle, 0);
+        } else {
+            _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateFadingIn, timer);
+        }
+        
+        break;
+    case _mainMenuFadeStateIdle:
+        backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
+        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+        break;
+    case _mainMenuFadeStateFadingOut:
+        if(timer > 8) {
+            backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+        } else if(timer != 0) {
+            backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+        } else {
+            backgroundPalette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+        }
+        
+        if(timer > 0) {
+            timer--;
+        }
+        
+        _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateFadingOut, timer);
+        if(timer == 0) {
+            // TODO: Exit main menu module
+        }
+        
+        break;
+    default:
+        gbFatalError("unrecognized fade state");
+    }
+}
+
 void _mainMenuUpdatePressStartCycle() {
     GBUInt8 x;
     
@@ -52,8 +138,6 @@ void mainMenuWake() {
     gbLCDDisable();
     
     memoryCopyBanked(gbTileMemory + 0x0800, titleTiles, titleTilesLength, titleTilesBank);
-    
-    audioPlayComposition(&titleSong, titleSongBank, audioLayerMusic, 0);
     
     c = 0;
     for(x = 0; x != gbTileMapWidth; x++) {
@@ -113,14 +197,26 @@ void mainMenuWake() {
         spriteAttributes[x].tileIndex = 0xE0 + x;
     }
     
+    backgroundPalette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    object0Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    object1Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    
+    audioPlayComposition(&titleSong, titleSongBank, audioLayerMusic, 0);
+    
+    _mainMenuBeginFadeIn();
+    
     gbLCDEnable();
 }
 
 void mainMenuUpdate() {
     _mainMenuUpdatePressStartCycle();
+    _mainMenuUpdateFadeState();
     
     if(gbJoypadPressedSinceLastUpdate & gbJoypadStart) {
-        gbLog("Start!");
+        if(_mainMenuFadeStateState() == _mainMenuFadeStateIdle) {
+            gbLog("TODO: Play fade out tone");
+            _mainMenuBeginFadeOut();
+        }
     }
 }
 
