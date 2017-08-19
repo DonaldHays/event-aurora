@@ -4,7 +4,7 @@
 #include "banks.h"
 #include "rand.h"
 #include "palette.h"
-#include "data/music_titleSong.h"
+#include "sprites.h"
 
 // ===
 // Private Variables
@@ -24,9 +24,7 @@ volatile GBBool _hasEnteredVBlank;
  * `true`.
  */
 void _vblank() {
-    if(((gbLCDStatusRegister & 0x03) == 0x01) && ((gbLCDYCoordinateRegister == 144))) {
-        _hasEnteredVBlank = true;
-    }
+    _hasEnteredVBlank = true;
 }
 
 /**
@@ -55,12 +53,16 @@ void _initializeSubsystems() {
     // (especially the module subsystem) are initialized, allowing them to
     // freely write to video memory.
     gbLCDDisable(); {
+        // Disables bit 4 of LCD Control Register, making background tiles begin from 0x8800.
         gbLCDControlRegister &= 0xEF;
+        
+        gbSpritesEnable();
         
         randomInit();
         banksInit();
         paletteInit();
         audioInit();
+        spritesInit();
         modulesInit();
     } gbLCDEnable();
 }
@@ -89,11 +91,11 @@ void main() {
     _initializeInterruptHandlers();
     
     modulesCurrentSet(&mainMenuModule);
-    audioPlayComposition(&titleSong, titleSongBank, audioLayerMusic, 0);
     
     while(true) {
         _waitForVBlank();
         
+        spritesWriteToOAM();
         modulesUpdateGraphics();
         paletteUpdateGraphics();
         audioUpdate();

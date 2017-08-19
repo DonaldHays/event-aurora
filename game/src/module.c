@@ -2,6 +2,7 @@
 
 #include "bank1/mainMenu.h"
 #include "banks.h"
+#include "sprites.h"
 
 // ===
 // Public Constant Data
@@ -74,6 +75,8 @@ void modulesCurrentSet(Module * module) {
             gbLCDInterruptHandler = null;
         }
     } gbInterruptsEnable();
+    
+    spritesClear();
     
     banksROMSet(module->romBank);
     

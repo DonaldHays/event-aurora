@@ -6,6 +6,7 @@
 #include "interrupts.h"
 #include "joypad.h"
 
+#define gbShadowOAMMemory ((volatile GBUInt8 *)0xC000)
 #define gbTileMemory ((volatile GBUInt8 *)0x8000)
 #define gbTileMap0 ((volatile GBUInt8 *)0x9800)
 #define gbTileMap1 ((volatile GBUInt8 *)0x9C00)
@@ -13,6 +14,8 @@
 
 #define gbTileMapWidth 32
 #define gbTileMapHeight 32
+
+#define gbSpritesCount 40
 
 #define gbShadeBlack 3
 #define gbShadeDarkGray 2

@@ -18,7 +18,8 @@ HOME_SRCS = \
 	game/src/memory.c \
 	game/src/text.c \
 	game/src/rand.c \
-	game/src/palette.c
+	game/src/palette.c \
+	game/src/sprites.c
 
 BANK1_SRCS = \
 	game/src/bank1/mainMenu.c

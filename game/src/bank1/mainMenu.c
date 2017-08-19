@@ -1,14 +1,49 @@
 #include "mainMenu.h"
 #include "../memory.h"
+#include "../sprites.h"
 #include "../data/gfx_titleTiles.h"
+#include "../data/music_titleSong.h"
 
 #pragma bank 1
+
+// ===
+// Private Defines
+// ===
+#define _mainMenuPressStartY 136
+#define _mainMenuPressStartCycleDuration 120
+
+// ===
+// Private Variables
+// ===
+GBUInt8 _mainMenuPressStartCycle;
+
+// ===
+// Private API
+// ===
+void _mainMenuUpdatePressStartCycle() {
+    GBUInt8 x;
+    
+    _mainMenuPressStartCycle--;
+    if(_mainMenuPressStartCycle == 0) {
+        _mainMenuPressStartCycle = _mainMenuPressStartCycleDuration;
+    }
+    
+    if(_mainMenuPressStartCycle < 30) {
+        for(x = 0; x != 8; x++) {
+            spriteAttributes[x].y = 0;
+        }
+    } else {
+        for(x = 0; x != 8; x++) {
+            spriteAttributes[x].y = _mainMenuPressStartY;
+        }
+    }
+}
 
 // ===
 // Public API
 // ===
 void mainMenuInit() {
-    
+    _mainMenuPressStartCycle = _mainMenuPressStartCycleDuration;
 }
 
 void mainMenuWake() {
@@ -17,6 +52,8 @@ void mainMenuWake() {
     gbLCDDisable();
     
     memoryCopyBanked(gbTileMemory + 0x0800, titleTiles, titleTilesLength, titleTilesBank);
+    
+    audioPlayComposition(&titleSong, titleSongBank, audioLayerMusic, 0);
     
     c = 0;
     for(x = 0; x != gbTileMapWidth; x++) {
@@ -70,10 +107,18 @@ void mainMenuWake() {
         gbTileMap0[x + 13 * gbTileMapWidth + 16] = 128 + 108 + x;
     }
     
+    for(x = 0; x != 8; x++) {
+        spriteAttributes[x].x = 56 + x * 8;
+        spriteAttributes[x].y = _mainMenuPressStartY;
+        spriteAttributes[x].tileIndex = 0xE0 + x;
+    }
+    
     gbLCDEnable();
 }
 
 void mainMenuUpdate() {
+    _mainMenuUpdatePressStartCycle();
+    
     if(gbJoypadPressedSinceLastUpdate & gbJoypadStart) {
         gbLog("Start!");
     }
