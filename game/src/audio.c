@@ -147,6 +147,10 @@ SquareFrameTickState _square2FrameTickState;
 AudioPlaybackState * _updatingState;
 AudioComposition const * _updatingComposition;
 
+GBUInt8 _square1OwnerLayer;
+GBUInt8 _square2OwnerLayer;
+GBUInt8 _noiseOwnerLayer;
+
 // ===
 // Private API
 // ===
@@ -163,7 +167,12 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
     
     if(composition == null) {
         _audioInitPlaybackState(state);
-        gbLog("TODO: Silence any channels owned by this layer");
+        gbLog("TODO: Silence any channels owned by this layer and release ownership");
+        // Releasing ownership may drop from sound to music, sound to none, or music to none.
+        // Sound can only drop to music if music wishes to own.
+        gbTone1VolumeRegister = 0x00;
+        gbTone2VolumeRegister = 0x00;
+        gbNoiseVolumeRegister = 0x00;
         return;
     }
     
@@ -187,6 +196,21 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
         state->noiseState.chainIndex = 0;
         state->noiseState.patternIndex = 0;
         state->noiseState.repeatStackIndex = 0;
+        
+        if(_square1OwnerLayer <= state->layer && composition->square1Chain.numberOfRows > 0) {
+            _square1OwnerLayer = state->layer;
+            // TODO: Kill anything currently playing
+        }
+        
+        if(_square2OwnerLayer <= state->layer && composition->square2Chain.numberOfRows > 0) {
+            _square2OwnerLayer = state->layer;
+            // TODO: Kill anything currently playing
+        }
+        
+        if(_noiseOwnerLayer <= state->layer && composition->noiseChain.numberOfRows > 0) {
+            _noiseOwnerLayer = state->layer;
+            // TODO: Kill anything currently playing
+        }
     } banksROMSet(originalBank);
 }
 
@@ -216,6 +240,7 @@ void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioCh
     lowerCommand = (patternRow->command) & 0xFF;
     
     if(patternRow->note != 0) {
+        // TODO: Only modify this part if the current layer owns the track
         gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
         gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
         
@@ -224,6 +249,7 @@ void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioCh
         registers[2] = instrument->volume;
         registers[3] = note & 0xFF;
         registers[4] = 0x80 | (note >> 8);
+        // END TODO
         
         tickState->mode = 0;
         tickState->frequency = note;
@@ -261,6 +287,7 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
     instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
     
     if(patternRow->note != 0) {
+        // TODO: Only modify this part if the current layer owns the track
         gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
         gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
         
@@ -268,6 +295,7 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
         gbNoiseVolumeRegister = instrument->volume;
         gbNoisePolynomialRegister = instrument->polynomial;
         gbNoiseTriggerRegister = 0x80;
+        // END TODO
     }
 }
 
@@ -343,6 +371,8 @@ void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, Audio
             
             // Jump to the label.
             channelState->chainIndex = chain->labels[repeatIndex];
+        } else {
+            // TODO: Release ownership of hardware channel, if owned
         }
     }
 }
@@ -393,8 +423,11 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
             state->mode = 2;
         } else {
             state->frequency += state->vibratoConfiguration & 0x0F;
+            
+            // TODO: Only modify this part if the current layer owns the track
             frequencyRegisters[0] = state->frequency & 0xFF;
             frequencyRegisters[1] = state->frequency >> 8;
+            // END TODO
         }
     } else if(state->mode == 2) {
         // Vibratto Decrement
@@ -404,8 +437,11 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
             state->mode = 1;
         } else {
             state->frequency -= state->vibratoConfiguration & 0x0F;
+            
+            // TODO: Only modify this part if the current layer owns the track
             frequencyRegisters[0] = state->frequency & 0xFF;
             frequencyRegisters[1] = state->frequency >> 8;
+            // END TODO
         }
     } else if(state->mode == 3) {
         // Arpeggio
@@ -422,8 +458,10 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
             frequency = audioNoteTable[state->note + state->arpeggioStepsSecond + state->arpeggioStepsThird];
         }
         
+        // TODO: Only modify this part if the current layer owns the track
         frequencyRegisters[0] = frequency & 0xFF;
         frequencyRegisters[1] = (frequency >> 8);
+        // END TODO
     }
 }
 
@@ -432,6 +470,10 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
 // ===
 void audioInit() {
     gbAudioTerminalRegister = 0xFF;
+    
+    _square1OwnerLayer = 0;
+    _square2OwnerLayer = 0;
+    _noiseOwnerLayer = 0;
     
     _audioInitPlaybackState(&_soundPlaybackState);
     _audioInitPlaybackState(&_musicPlaybackState);
