@@ -189,6 +189,15 @@ for(let index = 0; index < lines.length; index++) {
           "x" : parseInt(rowComponents[3]),
           "y" : parseInt(rowComponents[4])
         }
+      } else if(rowComponents[2] == "X") {
+        command = {
+          "type" : "terminatephrase"
+        };
+      } else if(rowComponents[2] == "-") {
+        
+      } else {
+        console.log(`unrecognized command ${rowComponents[2]}`);
+        process.exit(1);
       }
       
       const patternRow = {
@@ -475,6 +484,11 @@ function writeImplementation() {
           numbers[2] |= 0xB000;
           numbers[2] |= row.command.x << 4;
           numbers[2] |= row.command.y;
+        } else if(row.command.type == "terminatephrase") {
+          numbers[2] |= 0xC000;
+        } else {
+          console.log(`error: unrecognized command type ${row.command.type}`);
+          process.exit(1);
         }
       }
       

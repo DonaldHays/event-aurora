@@ -106,6 +106,7 @@ typedef struct {
      *   B-12
      *   1 - Steps from first to second note in chord
      *   2 - Steps from second to third note in chord
+     * C - Terminate phrase.
      */
     GBUInt16 command;
 } AudioPatternRow;

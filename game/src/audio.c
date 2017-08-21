@@ -42,6 +42,7 @@ typedef struct {
      * 0x01 -> vibratoUp
      * 0x02 -> vibratoDown
      * 0x03 -> arpeggio
+     * 0x04 -> terminate
      */
     GBUInt8 mode;
     GBUInt8 vibratoConfiguration;
@@ -160,6 +161,12 @@ void _audioInitPlaybackState(AudioPlaybackState * state) {
 void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioPlaybackState * state, GBUInt8 priority) {
     GBUInt8 originalBank;
     
+    if(composition == null) {
+        _audioInitPlaybackState(state);
+        gbLog("TODO: Silence any channels owned by this layer");
+        return;
+    }
+    
     if(state->composition != null && state->priority > priority) {
         return;
     }
@@ -183,17 +190,23 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlaySquareNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
+void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
     GBUInt16 note;
     GBUInt8 upperCommand;
     GBUInt8 lowerCommand;
+    GBUInt8 chainIndex;
+    GBUInt8 patternIndex;
+    
+    chainIndex = channelState->chainIndex;
     
     if(chainIndex == chain->numberOfRows) {
         return;
     }
+    
+    patternIndex = channelState->patternIndex;
     
     patternTableIndex = chain->rows[chainIndex].pattern;
     patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
@@ -228,6 +241,9 @@ void _audioStatePlaySquareNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCh
         tickState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
         tickState->arpeggioStepsThird = (lowerCommand & 0x0F);
         tickState->tickCounter = 0;
+    } else if((upperCommand & 0xF0) == 0xC0) {
+        // Terminate Phrase
+        channelState->patternIndex = 15;
     }
 }
 
@@ -258,8 +274,8 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
 void _audioStatePlayNotes() {
     AudioPlaybackState * state = _updatingState;
     
-    _audioStatePlaySquareNote(state->square1State.chainIndex, state->square1State.patternIndex, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
-    _audioStatePlaySquareNote(state->square2State.chainIndex, state->square2State.patternIndex, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
+    _audioStatePlaySquareNote(&state->square1State, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
+    _audioStatePlaySquareNote(&state->square2State, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
     _audioStatePlayNoiseNote(state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), 0x80, 0x08);
 }
 

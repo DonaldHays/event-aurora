@@ -215,6 +215,7 @@ void mainMenuUpdate() {
     if(gbJoypadPressedSinceLastUpdate & gbJoypadStart) {
         if(_mainMenuFadeStateState() == _mainMenuFadeStateIdle) {
             gbLog("TODO: Play fade out tone");
+            audioPlayComposition(null, 0, audioLayerMusic, 0);
             _mainMenuBeginFadeOut();
         }
     }

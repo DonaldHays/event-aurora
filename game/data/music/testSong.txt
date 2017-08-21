@@ -49,6 +49,7 @@ NI Crash   00 10  0  6 03 0  4 LR
 # V T S, Vibratto, oscillation takes 2 * T frames, with S steps each frame.
 # A X Y, Arpeggio, second note is X steps from first note, third is Y from
 #        second.
+# X, Terminate Phrase
 
 PA Melody1
   C4 Square1 V 8 1
