@@ -1,0 +1,12 @@
+{ "columns":8,
+ "image":"CastleMetatiles.png",
+ "imageheight":64,
+ "imagewidth":128,
+ "margin":0,
+ "name":"CastleMetatiles",
+ "spacing":0,
+ "tilecount":32,
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset"
+}
