@@ -22,6 +22,7 @@ typedef struct {
     GBUInt8 patternIndex;
     GBUInt8 repeatStackIndex;
     AudioRepeatStack repeatStack;
+    GBUInt8 *ownerLayer;
 } AudioChannelPlaybackState;
 
 typedef struct {
@@ -154,12 +155,16 @@ GBUInt8 _noiseOwnerLayer;
 // ===
 // Private API
 // ===
+
 void _audioInitPlaybackState(AudioPlaybackState * state) {
     state->composition = null;
     state->priority = 0;
     state->square1State.repeatStackIndex = 0;
     state->square2State.repeatStackIndex = 0;
     state->noiseState.repeatStackIndex = 0;
+    state->square1State.ownerLayer = &_square1OwnerLayer;
+    state->square2State.ownerLayer = &_square2OwnerLayer;
+    state->noiseState.ownerLayer = &_noiseOwnerLayer;
 }
 
 void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioPlaybackState * state, GBUInt8 priority) {
@@ -214,7 +219,7 @@ void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank
     } banksROMSet(originalBank);
 }
 
-void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioChain const * chain, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
+void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioChain const * chain, AudioLayer layer, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     SquareInstrument const * instrument;
@@ -240,16 +245,16 @@ void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioCh
     lowerCommand = (patternRow->command) & 0xFF;
     
     if(patternRow->note != 0) {
-        // TODO: Only modify this part if the current layer owns the track
-        gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
-        gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
-        
-        registers[0] = instrument->sweep;
-        registers[1] = instrument->pattern;
-        registers[2] = instrument->volume;
-        registers[3] = note & 0xFF;
-        registers[4] = 0x80 | (note >> 8);
-        // END TODO
+        if(*(channelState->ownerLayer) == layer) {
+            gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
+            gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
+            
+            registers[0] = instrument->sweep;
+            registers[1] = instrument->pattern;
+            registers[2] = instrument->volume;
+            registers[3] = note & 0xFF;
+            registers[4] = 0x80 | (note >> 8);
+        }
         
         tickState->mode = 0;
         tickState->frequency = note;
@@ -273,7 +278,7 @@ void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioCh
     }
 }
 
-void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, AudioLayer layer, GBUInt8 leftVolume, GBUInt8 rightVolume) {
     GBUInt8 patternTableIndex;
     AudioPatternRow const * patternRow;
     NoiseInstrument const * instrument;
@@ -287,24 +292,24 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
     instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
     
     if(patternRow->note != 0) {
-        // TODO: Only modify this part if the current layer owns the track
-        gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
-        gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
-        
-        gbNoiseLengthRegister = instrument->length;
-        gbNoiseVolumeRegister = instrument->volume;
-        gbNoisePolynomialRegister = instrument->polynomial;
-        gbNoiseTriggerRegister = 0x80;
-        // END TODO
+        if(_noiseOwnerLayer == layer) {
+            gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
+            gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
+            
+            gbNoiseLengthRegister = instrument->length;
+            gbNoiseVolumeRegister = instrument->volume;
+            gbNoisePolynomialRegister = instrument->polynomial;
+            gbNoiseTriggerRegister = 0x80;
+        }
     }
 }
 
 void _audioStatePlayNotes() {
     AudioPlaybackState * state = _updatingState;
     
-    _audioStatePlaySquareNote(&state->square1State, &(state->composition->square1Chain), &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
-    _audioStatePlaySquareNote(&state->square2State, &(state->composition->square2Chain), &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
-    _audioStatePlayNoiseNote(state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), 0x80, 0x08);
+    _audioStatePlaySquareNote(&state->square1State, &(state->composition->square1Chain), state->layer, &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
+    _audioStatePlaySquareNote(&state->square2State, &(state->composition->square2Chain), state->layer, &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
+    _audioStatePlayNoiseNote(state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), state->layer, 0x80, 0x08);
 }
 
 void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, AudioChain const * chain) {
