@@ -4,6 +4,7 @@
 #include "../palette.h"
 #include "../data/gfx_titleTiles.h"
 #include "../data/music_titleSong.h"
+#include "../data/music_testBoing.h"
 
 #pragma bank 1
 
@@ -218,6 +219,10 @@ void mainMenuUpdate() {
             audioPlayComposition(null, 0, audioLayerMusic, 0);
             _mainMenuBeginFadeOut();
         }
+    }
+    
+    if(gbJoypadPressedSinceLastUpdate & gbJoypadA) {
+        audioPlayComposition(&testBoing, testBoingBank, audioLayerSound, 0);
     }
 }
 

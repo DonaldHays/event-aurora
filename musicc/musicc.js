@@ -371,6 +371,9 @@ function writeImplementation() {
   output.push(`const AudioComposition ${songName} = {`);
   
   output.push(`  { // Square Instruments`);
+  if(song.squareInstruments.length == 0) {
+    output.push(`    { 0x00 }`);
+  }
   song.squareInstruments.forEach((instrument, index) => {
     const bytes = [0, 0, 0, 0];
     
@@ -398,6 +401,9 @@ function writeImplementation() {
   output.push(`  },`);
   
   output.push(`  { // Noise Instruments`);
+  if(song.noiseInstruments.length == 0) {
+    output.push(`    { 0x00 }`);
+  }
   song.noiseInstruments.forEach((instrument, index) => {
     const bytes = [0, 0, 0, 0];
     
