@@ -1,11 +1,19 @@
 { "columns":8,
  "image":"CastleMetatiles.png",
- "imageheight":64,
+ "imageheight":128,
  "imagewidth":128,
  "margin":0,
  "name":"CastleMetatiles",
+ "properties":
+    {
+     "Bank":2
+    },
+ "propertytypes":
+    {
+     "Bank":"int"
+    },
  "spacing":0,
- "tilecount":32,
+ "tilecount":64,
  "tileheight":16,
  "tileproperties":
     {
@@ -113,17 +121,145 @@
         {
          "IsSolid":true
         },
+     "32":
+        {
+         "IsSolid":false
+        },
+     "33":
+        {
+         "IsSolid":false
+        },
+     "34":
+        {
+         "IsSolid":false
+        },
+     "35":
+        {
+         "IsSolid":false
+        },
+     "36":
+        {
+         "IsSolid":false
+        },
+     "37":
+        {
+         "IsSolid":false
+        },
+     "38":
+        {
+         "IsSolid":false
+        },
+     "39":
+        {
+         "IsSolid":false
+        },
      "4":
         {
          "IsSolid":true
+        },
+     "40":
+        {
+         "IsSolid":false
+        },
+     "41":
+        {
+         "IsSolid":false
+        },
+     "42":
+        {
+         "IsSolid":false
+        },
+     "43":
+        {
+         "IsSolid":false
+        },
+     "44":
+        {
+         "IsSolid":false
+        },
+     "45":
+        {
+         "IsSolid":false
+        },
+     "46":
+        {
+         "IsSolid":false
+        },
+     "47":
+        {
+         "IsSolid":false
+        },
+     "48":
+        {
+         "IsSolid":false
+        },
+     "49":
+        {
+         "IsSolid":false
         },
      "5":
         {
          "IsSolid":true
         },
+     "50":
+        {
+         "IsSolid":false
+        },
+     "51":
+        {
+         "IsSolid":false
+        },
+     "52":
+        {
+         "IsSolid":false
+        },
+     "53":
+        {
+         "IsSolid":false
+        },
+     "54":
+        {
+         "IsSolid":false
+        },
+     "55":
+        {
+         "IsSolid":false
+        },
+     "56":
+        {
+         "IsSolid":false
+        },
+     "57":
+        {
+         "IsSolid":false
+        },
+     "58":
+        {
+         "IsSolid":false
+        },
+     "59":
+        {
+         "IsSolid":false
+        },
      "6":
         {
          "IsSolid":true
+        },
+     "60":
+        {
+         "IsSolid":false
+        },
+     "61":
+        {
+         "IsSolid":false
+        },
+     "62":
+        {
+         "IsSolid":false
+        },
+     "63":
+        {
+         "IsSolid":false
         },
      "7":
         {
@@ -244,7 +380,79 @@
         {
          "IsSolid":"bool"
         },
+     "32":
+        {
+         "IsSolid":"bool"
+        },
+     "33":
+        {
+         "IsSolid":"bool"
+        },
+     "34":
+        {
+         "IsSolid":"bool"
+        },
+     "35":
+        {
+         "IsSolid":"bool"
+        },
+     "36":
+        {
+         "IsSolid":"bool"
+        },
+     "37":
+        {
+         "IsSolid":"bool"
+        },
+     "38":
+        {
+         "IsSolid":"bool"
+        },
+     "39":
+        {
+         "IsSolid":"bool"
+        },
      "4":
+        {
+         "IsSolid":"bool"
+        },
+     "40":
+        {
+         "IsSolid":"bool"
+        },
+     "41":
+        {
+         "IsSolid":"bool"
+        },
+     "42":
+        {
+         "IsSolid":"bool"
+        },
+     "43":
+        {
+         "IsSolid":"bool"
+        },
+     "44":
+        {
+         "IsSolid":"bool"
+        },
+     "45":
+        {
+         "IsSolid":"bool"
+        },
+     "46":
+        {
+         "IsSolid":"bool"
+        },
+     "47":
+        {
+         "IsSolid":"bool"
+        },
+     "48":
+        {
+         "IsSolid":"bool"
+        },
+     "49":
         {
          "IsSolid":"bool"
         },
@@ -252,7 +460,63 @@
         {
          "IsSolid":"bool"
         },
+     "50":
+        {
+         "IsSolid":"bool"
+        },
+     "51":
+        {
+         "IsSolid":"bool"
+        },
+     "52":
+        {
+         "IsSolid":"bool"
+        },
+     "53":
+        {
+         "IsSolid":"bool"
+        },
+     "54":
+        {
+         "IsSolid":"bool"
+        },
+     "55":
+        {
+         "IsSolid":"bool"
+        },
+     "56":
+        {
+         "IsSolid":"bool"
+        },
+     "57":
+        {
+         "IsSolid":"bool"
+        },
+     "58":
+        {
+         "IsSolid":"bool"
+        },
+     "59":
+        {
+         "IsSolid":"bool"
+        },
      "6":
+        {
+         "IsSolid":"bool"
+        },
+     "60":
+        {
+         "IsSolid":"bool"
+        },
+     "61":
+        {
+         "IsSolid":"bool"
+        },
+     "62":
+        {
+         "IsSolid":"bool"
+        },
+     "63":
         {
          "IsSolid":"bool"
         },

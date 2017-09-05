@@ -1,0 +1,9 @@
+{
+    "name" : "metac",
+    "version" : "1.0.0",
+    "main": "metac",
+    "dependencies" : {
+      "commander" : "~2.11.0",
+      "pngjs" : "~3.3.0"
+    }
+  }
