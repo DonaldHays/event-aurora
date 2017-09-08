@@ -1,16 +1,18 @@
 { "columns":8,
- "image":"CastleMetatiles.png",
+ "image":"castleMetatiles.png",
  "imageheight":128,
  "imagewidth":128,
  "margin":0,
- "name":"CastleMetatiles",
+ "name":"castleMetatiles",
  "properties":
     {
-     "Bank":2
+     "Bank":2,
+     "Tiles":"game\/data\/gfx\/castleTiles.png"
     },
  "propertytypes":
     {
-     "Bank":"int"
+     "Bank":"int",
+     "Tiles":"string"
     },
  "spacing":0,
  "tilecount":64,

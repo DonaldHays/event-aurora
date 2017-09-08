@@ -39,6 +39,10 @@ BANK2_SONGS = \
 	game/data/music/testBoing.txt
 BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
 
+BANK2_METATILES = \
+	game/data/metatiles/castleMetatiles.png
+BANK2_SRCS += $(patsubst game/data/metatiles/%.png,game/src/data/meta_%.c,$(BANK2_METATILES))
+
 BANK3_GFX = \
 	game/data/gfx/castleTiles.png
 BANK3_SRCS = $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK3_GFX))
@@ -109,6 +113,10 @@ game/src/data/music_%.c: game/data/music/%.txt
 game/src/data/gfx_%.c: game/data/gfx/%.png
 	$(ENSURE_DIRECTORY)
 	node img2gb -n $(notdir $(basename $<)) $< $@
+
+game/src/data/meta_%.c: game/data/metatiles/%.png
+	$(ENSURE_DIRECTORY)
+	node metac $< $@
 
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)

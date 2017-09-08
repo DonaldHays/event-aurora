@@ -11,18 +11,22 @@ commander
   .option("-b, --bank [value]", "The output bank", "0")
   .parse(process.argv);
 
-if(commander.args.length != 3) {
-  console.error("must provide input, image, and output files");
+if(commander.args.length != 2) {
+  console.error("must provide input and output files");
   process.exit(1);
 }
 
-const metatiles = [];
-
 const inputFilePath = path.resolve(commander.args[0]);
 const inputFileJSONPath = inputFilePath.substr(0, inputFilePath.length - path.extname(inputFilePath).length) + ".json";
-const imageFilePath = path.resolve(commander.args[1]);
-const outputFilePath = path.resolve(commander.args[2]);
+const outputFilePath = path.resolve(commander.args[1]);
 const outputHeaderPath = outputFilePath.substr(0, outputFilePath.length - path.extname(outputFilePath).length) + ".h";
+
+const metatilesJSON = JSON.parse(fs.readFileSync(inputFileJSONPath));
+const bank = metatilesJSON["properties"]["Bank"] || 0;
+const imageFilePath = path.resolve(metatilesJSON["properties"]["Tiles"]);
+
+const metatiles = [];
+
 const name = (() => {
   const base = path.basename(inputFilePath);
   const withoutExtension = base.substr(0, base.length - path.extname(base).length);
@@ -56,7 +60,6 @@ for(let tileIndexY = 0; tileIndexY < tilesHigh; tileIndexY++) {
   }
 }
 
-const metatilesJSON = JSON.parse(fs.readFileSync(inputFileJSONPath));
 const metaTilesPNG = PNG.sync.read(fs.readFileSync(inputFilePath));
 
 if(metaTilesPNG.width % 16 != 0 || metaTilesPNG.height % 16 != 0) {
@@ -66,8 +69,6 @@ if(metaTilesPNG.width % 16 != 0 || metaTilesPNG.height % 16 != 0) {
 
 const metatilesWide = metaTilesPNG.width / 16;
 const metatilesHigh = metaTilesPNG.height / 16;
-
-const bank = metatilesJSON["properties"]["Bank"] || 0;
 
 for(let metatileIndexY = 0; metatileIndexY < metatilesHigh; metatileIndexY++) {
   for(let metatileIndexX = 0; metatileIndexX < metatilesWide; metatileIndexX++) {
@@ -119,25 +120,60 @@ function writeHeader() {
   output.push(``);
   
   output.push(`#include <gb/gb.h>`);
-  output.push(`#include "metatiles.h"`);
+  output.push(`#include "../metatiles.h"`);
   output.push(``);
   
   output.push(`#define ${name}Bank ${bank}`);
   output.push(``);
   
-  output.push(`extern MetatileIndices ${name}Indices;`);
-  output.push(`extern MetatileAttributes ${name}Attributes;`);
+  output.push(`extern const MetatileIndices ${name}Indices[];`);
+  output.push(`extern const MetatileAttributes ${name}Attributes[];`);
   output.push(``);
   
   output.push(`#endif`);
   output.push(``);
   
   output = output.join("\n");
-  console.log(output);
+  
+  fs.writeFileSync(outputHeaderPath, output);
 }
 
 function writeImplementation() {
+  let output = [];
+  output.push("// IMPORTANT: Tool-generated file. Do not modify.");
+  output.push(``);
   
+  output.push(`#include "${path.basename(outputHeaderPath)}"`);
+  output.push(``);
+  
+  output.push(`#pragma bank ${bank}`);
+  output.push(``);
+  
+  output.push(`const MetatileIndices ${name}Indices[] = {`);
+  metatiles.forEach((metatile, index) => {
+    const indices = metatile["indices"];
+    output.push(`  { 0x${formatter.toHex(indices[0])}, 0x${formatter.toHex(indices[1])}, 0x${formatter.toHex(indices[2])}, 0x${formatter.toHex(indices[3])} }${index == metatiles.length - 1 ? `` : `,`}`);
+  });
+  output.push(`};`);
+  output.push(``);
+  
+  output.push(`const MetatileAttributes ${name}Attributes[] = {`);
+  metatiles.forEach((metatile, index) => {
+    const properties = metatile["properties"];
+    let attributes = 0;
+    
+    if(properties["IsSolid"]) {
+      attributes |= 0x01;
+    }
+    
+    output.push(`  0x${formatter.toHex(attributes)}${index == metatiles.length - 1 ? `` : `,`}`);
+  });
+  output.push(`};`);
+  output.push(``);
+  
+  output = output.join("\n");
+  
+  fs.writeFileSync(outputFilePath, output);
 }
 
 writeHeader();
