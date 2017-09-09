@@ -1,0 +1,8 @@
+{
+  "name" : "mapc",
+  "version" : "1.0.0",
+  "main": "mapc",
+  "dependencies" : {
+    "commander" : "~2.11.0"
+  }
+}

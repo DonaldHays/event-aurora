@@ -33,6 +33,10 @@ BANK1_GFX = \
 	game/data/gfx/titleTiles.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
+BANK1_MAPS = \
+	game/data/maps/sample.json
+BANK1_SRCS += $(patsubst game/data/maps/%.json,game/src/data/map_%.c,$(BANK1_MAPS))
+
 BANK2_SONGS = \
 	game/data/music/testSong.txt \
 	game/data/music/titleSong.txt \
@@ -117,6 +121,10 @@ game/src/data/gfx_%.c: game/data/gfx/%.png
 game/src/data/meta_%.c: game/data/metatiles/%.png
 	$(ENSURE_DIRECTORY)
 	node metac $< $@
+
+game/src/data/map_%.c: game/data/maps/%.json
+	$(ENSURE_DIRECTORY)
+	node mapc $< $@
 
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)

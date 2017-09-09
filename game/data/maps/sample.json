@@ -13,6 +13,14 @@
         }],
  "nextobjectid":1,
  "orientation":"orthogonal",
+ "properties":
+    {
+     "Bank":2
+    },
+ "propertytypes":
+    {
+     "Bank":"int"
+    },
  "renderorder":"right-down",
  "tiledversion":"1.0.2",
  "tileheight":16,
