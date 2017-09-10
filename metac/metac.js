@@ -124,6 +124,7 @@ function writeHeader() {
   output.push(``);
   
   output.push(`#define ${name}Bank ${bank}`);
+  output.push(`#define ${name}Count ${metatiles.length}`);
   output.push(``);
   
   output.push(`extern const MetatileIndices ${name}Indices[];`);
