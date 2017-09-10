@@ -1,6 +1,7 @@
 #include "module.h"
 
 #include "bank1/mainMenu.h"
+#include "bank4/game.h"
 #include "banks.h"
 #include "sprites.h"
 
@@ -8,12 +9,14 @@
 // Public Constant Data
 // ===
 const Module mainMenuModule = { &mainMenuInit, &mainMenuWake, &mainMenuUpdate, &mainMenuUpdateGraphics, 1, 1 };
+const Module gameModule = { &gameInit, &gameWake, &gameUpdate, &gameUpdateGraphics, 4, 0 };
 
 // ===
 // Private Variables
 // ===
 GBUInt8 _lcdInterruptMode;
 Module * _currentModule;
+Module * _nextModule;
 
 GBUInt8 _modulesCloud0Scroll;
 GBUInt8 _modulesCloud0ScrollTimer;
@@ -56,8 +59,14 @@ void modulesInit() {
     _modulesCloud2Scroll = 0;
     _modulesCloud2ScrollTimer = 7;
     
+    _currentModule = null;
+    _nextModule = null;
+    
     banksROMSet(mainMenuModule.romBank);
     (*mainMenuModule.init)();
+    
+    banksROMSet(gameModule.romBank);
+    (*gameModule.init)();
 }
 
 void modulesCurrentSet(Module * module) {
@@ -85,7 +94,16 @@ void modulesCurrentSet(Module * module) {
     }
 }
 
+void modulesSetNext(Module * module) {
+    _nextModule = module;
+}
+
 void modulesUpdate() {
+    if(_nextModule != null) {
+        modulesCurrentSet(_nextModule);
+        _nextModule = null;
+    }
+    
     if(_lcdInterruptMode == 1) {
         _modulesCloud0ScrollTimer--;
         if(_modulesCloud0ScrollTimer == 0) {

@@ -4,7 +4,7 @@ LIBTOOL = sdcc/bin/sdar
 
 CFLAGS = -c -mgbz80 -I "gblib/include"
 ASMFLAGS = -plosgff
-LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib -Wl-b_CODE_1=0x014000 -Wl-b_CODE_2=0x024000 -Wl-b_CODE_3=0x034000
+LINKFLAGS = -mgbz80 --no-std-crt0 --data-loc 0xc0a0 -L gblib/lib -Wl-b_CODE_1=0x014000 -Wl-b_CODE_2=0x024000 -Wl-b_CODE_3=0x034000 -Wl-b_CODE_4=0x044000
 
 GBLIB_SRCS = \
 	gblib/src/gb.c \
@@ -51,7 +51,10 @@ BANK3_GFX = \
 	game/data/gfx/castleTiles.png
 BANK3_SRCS = $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK3_GFX))
 
-GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS) $(BANK3_SRCS)
+BANK4_SRCS = \
+	game/src/bank4/game.c
+
+GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS) $(BANK3_SRCS) $(BANK4_SRCS)
 
 GBLIB_OBJS = $(patsubst gblib/src%,gblib/obj%,$(patsubst %.c,%.rel,$(GBLIB_SRCS)))
 
@@ -128,7 +131,7 @@ game/src/data/map_%.c: game/data/maps/%.json
 
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)
-	node ihx2gb --name EVENTAURORA --licensee DH --cartridge 3 --rom 1 --ram 1 game/obj/game.ihx game/bin/EventAurora.gb
+	node ihx2gb --name EVENTAURORA --licensee DH --cartridge 3 --rom 2 --ram 1 game/obj/game.ihx game/bin/EventAurora.gb
 
 game/obj/game.ihx: $(GAME_OBJS)
 	$(ENSURE_DIRECTORY)

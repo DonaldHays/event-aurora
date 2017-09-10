@@ -2,6 +2,7 @@
 #include "../memory.h"
 #include "../sprites.h"
 #include "../palette.h"
+#include "../module.h"
 #include "../data/gfx_titleTiles.h"
 #include "../data/music_titleSong.h"
 #include "../data/music_testBoing.h"
@@ -78,6 +79,10 @@ void _mainMenuUpdateFadeState() {
         object1Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
         break;
     case _mainMenuFadeStateFadingOut:
+        if(timer > 0) {
+            timer--;
+        }
+        
         if(timer > 8) {
             backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
             object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
@@ -92,13 +97,9 @@ void _mainMenuUpdateFadeState() {
             object1Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
         }
         
-        if(timer > 0) {
-            timer--;
-        }
-        
         _mainMenuFadeRegister = _mainMenuMakeFadeState(_mainMenuFadeStateFadingOut, timer);
         if(timer == 0) {
-            // TODO: Exit main menu module
+            modulesSetNext(&gameModule);
         }
         
         break;
