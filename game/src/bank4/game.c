@@ -1,9 +1,11 @@
 #include "game.h"
 #include "../data/gfx_castleTiles.h"
+#include "../data/gfx_heroTiles.h"
 #include "../data/meta_castleMetatiles.h"
 #include "../data/map_sample.h"
 #include "../memory.h"
 #include "../palette.h"
+#include "../sprites.h"
 
 #pragma bank 4
 
@@ -27,8 +29,8 @@ void gameWake() {
     
     gbLCDDisable(); {
         backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
-        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
-        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
+        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
         
         memoryCopyBanked(gbTileMemory + 256 * 16, castleTiles, castleTilesLength, castleTilesBank);
         memoryCopyBanked(_mapMetatiles, sampleMapIndices, 80, sampleMapBank);
@@ -61,9 +63,28 @@ void gameSuspend() {
 }
 
 void gameUpdate() {
+    spriteAttributes[0].x = 70;
+    spriteAttributes[0].y = 80;
+    spriteAttributes[0].tileIndex = 0;
+    spriteAttributes[0].attributes = 0;
     
+    spriteAttributes[1].x = 78;
+    spriteAttributes[1].y = 80;
+    spriteAttributes[1].tileIndex = 1;
+    spriteAttributes[1].attributes = 0;
+    
+    spriteAttributes[2].x = 70;
+    spriteAttributes[2].y = 88;
+    spriteAttributes[2].tileIndex = 2;
+    spriteAttributes[2].attributes = 0;
+    
+    spriteAttributes[3].x = 78;
+    spriteAttributes[3].y = 88;
+    spriteAttributes[3].tileIndex = 3;
+    spriteAttributes[3].attributes = 0;
 }
 
 void gameUpdateGraphics() {
-    
+    memoryCopy64Banked(gbTileMemory, heroTiles, heroTilesBank);
+    // gbLogUInt8(gbLCDYCoordinateRegister);
 }

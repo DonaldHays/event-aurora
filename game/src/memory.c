@@ -1,6 +1,17 @@
 #include "memory.h"
 #include "banks.h"
 
+#define writeBlock \
+    ld a, (hl+) \
+    ld (de), a \
+    inc de
+
+#define writeBlock4 \
+    writeBlock \
+    writeBlock \
+    writeBlock \
+    writeBlock
+
 // ===
 // Public API
 // ===
@@ -70,70 +81,85 @@ void memoryCopy16(void * destination, const void * source) {
     ld l, a
     
     ; *(de++) = *(hl++) (x16)
-    ld a, (hl+)
-    ld (de), a
-    inc de
+    writeBlock4
+    writeBlock4
+    writeBlock4
     
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
-    
-    ld a, (hl+)
-    ld (de), a
-    inc de
+    writeBlock
+    writeBlock
+    writeBlock
     
     ld a, (hl)
     ld (de), a
     
     __endasm;
+}
+
+void memoryCopy64(void * destination, const void * source) {
+    // Silence unused variable warnings
+    (void)destination;
+    (void)source;
+    
+    __asm
+    
+    ; de = destination
+    ldhl sp, #2
+    ld e, (hl)
+    inc hl
+    ld a, (hl+)
+    ld d, a
+    
+    ; hl = source
+    ld a, (hl+)
+    ld h, (hl)
+    ld l, a
+    
+    ; *(de++) = *(hl++) (x64)
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    
+    writeBlock4
+    writeBlock4
+    writeBlock4
+    
+    writeBlock
+    writeBlock
+    writeBlock
+    
+    ld a, (hl)
+    ld (de), a
+    
+    __endasm;
+}
+
+void memoryCopy16Banked(void * destination, const void * source, GBUInt8 sourceROMBank) {
+    GBUInt8 originalROMBank;
+    originalROMBank = banksROMGet();
+    
+    banksROMSet(sourceROMBank); {
+        memoryCopy16(destination, source);
+    } banksROMSet(originalROMBank);
+}
+
+void memoryCopy64Banked(void * destination, const void * source, GBUInt8 sourceROMBank) {
+    GBUInt8 originalROMBank;
+    originalROMBank = banksROMGet();
+    
+    banksROMSet(sourceROMBank); {
+        memoryCopy64(destination, source);
+    } banksROMSet(originalROMBank);
 }
 
 void memoryCopy(void * destination, const void * source, GBUInt16 length) {

@@ -17,7 +17,23 @@ void paletteInit() {
 }
 
 void paletteUpdateGraphics() {
-    gbBackgroundPaletteRegister = backgroundPalette;
-    gbObject0PaletteRegister = object0Palette;
-    gbObject1PaletteRegister = object1Palette;
+    // gbBackgroundPaletteRegister = backgroundPalette;
+    // gbObject0PaletteRegister = object0Palette;
+    // gbObject1PaletteRegister = object1Palette;
+    
+    __asm
+    ld de, #0xFF47
+    ld hl, #_backgroundPalette
+    
+    ld a, (hl+)
+    ld (de), a
+    inc de
+    
+    ld a, (hl+)
+    ld (de), a
+    inc de
+    
+    ld a, (hl)
+    ld (de), a
+    __endasm;
 }

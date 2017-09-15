@@ -96,8 +96,8 @@ void main() {
         _waitForVBlank();
         
         spritesWriteToOAM();
-        modulesUpdateGraphics();
         paletteUpdateGraphics();
+        modulesUpdateGraphics();
         audioUpdate();
         gbJoypadStateUpdate();
         modulesUpdate();

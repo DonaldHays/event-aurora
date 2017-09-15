@@ -17,6 +17,23 @@ void memorySet(void * destination, GBUInt8 value, GBUInt16 length);
 void memoryCopy16(void * destination, const void * source);
 
 /**
+ * Copies 64 bytes from `source` to `destination`.
+ */
+ void memoryCopy64(void * destination, const void * source);
+
+/**
+ * Copies 16 bytes from `source` in `sourceROMBank` to `destination`, and then
+ * restores the current ROM bank.
+ */
+ void memoryCopy16Banked(void * destination, const void * source, GBUInt8 sourceROMBank);
+ 
+ /**
+ * Copies 64 bytes from `source` in `sourceROMBank` to `destination`, and then
+ * restores the current ROM bank.
+ */
+ void memoryCopy64Banked(void * destination, const void * source, GBUInt8 sourceROMBank);
+
+/**
  * Copies `length` bytes from `source` to `destination`.
  *
  * This function takes about 30% of the time that `memcpy` does when copying
