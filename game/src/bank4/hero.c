@@ -1,5 +1,6 @@
 #include "hero.h"
 #include "../sprites.h"
+#include "game.h"
 
 // ===
 // Types
@@ -29,6 +30,160 @@ void _heroJump() {
     _heroHasReleasedA = false;
 }
 
+void _heroMapEdgeBonk() {
+    if(_heroX < 32 * 16) {
+        _heroX = 32 * 16;
+    }
+    
+    if(_heroX > (32 + 160 - 16) * 16) {
+        _heroX = (32 + 160 - 16) * 16;
+    }
+}
+
+void _heroWallBonk() {
+    GBUInt8 sensorY;
+    GBUInt8 sensorX;
+    GBUInt8 tileX;
+    GBUInt8 tileY;
+    GBUInt8 attributes;
+    
+    sensorY = (_heroY >> 4) - 32;
+    tileY = sensorY >> 4;
+    sensorX = (_heroX >> 4) - (32 - 4);
+    tileX = sensorX >> 4;
+    
+    attributes = mapAttributes[tileX + tileY * 10];
+    if(attributes & 0x01) {
+        _heroX = ((((GBUInt16)tileX + 1) << 4) + 32 - 4) << 4;
+    }
+    
+    sensorX = (_heroX >> 4) - (32 - 12);
+    tileX = sensorX >> 4;
+    attributes = mapAttributes[tileX + tileY * 10];
+    if(attributes & 0x01) {
+        _heroX = ((((GBUInt16)tileX) << 4) + 32 - 12) << 4;
+    }
+    
+    sensorY += 15;
+    if((sensorY >> 4) != tileY) {
+        tileY = sensorY >> 4;
+        sensorX = (_heroX >> 4) - (32 - 4);
+        tileX = sensorX >> 4;
+        
+        attributes = mapAttributes[tileX + tileY * 10];
+        if(attributes & 0x01) {
+            _heroX = ((((GBUInt16)tileX + 1) << 4) + 32 - 4) << 4;
+        }
+        
+        sensorX = (_heroX >> 4) - (32 - 12);
+        tileX = sensorX >> 4;
+        attributes = mapAttributes[tileX + tileY * 10];
+        if(attributes & 0x01) {
+            _heroX = ((((GBUInt16)tileX) << 4) + 32 - 12) << 4;
+        }
+    }
+}
+
+void _heroFallCheck() {
+    GBUInt8 sensorY;
+    GBUInt8 sensorX;
+    GBUInt8 tileX;
+    GBUInt8 tileY;
+    GBUInt8 attributes;
+    GBBool hasFootStanding;
+    
+    hasFootStanding = false;
+    
+    sensorY = (_heroY >> 4) - (32 - 16);
+    tileY = sensorY >> 4;
+    sensorX = (_heroX >> 4) - (32 - 4);
+    tileX = sensorX >> 4;
+    
+    attributes = mapAttributes[tileX + tileY * 10];
+    if(attributes & 0x01) {
+        hasFootStanding = true;
+    } else {
+        sensorX = (_heroX >> 4) - (32 - 11);
+        tileX = sensorX >> 4;
+        attributes = mapAttributes[tileX + tileY * 10];
+        if(attributes & 0x01) {
+            hasFootStanding = true;
+        }
+    }
+    
+    if(hasFootStanding == false) {
+        _heroVelocityY = 0;
+        _heroState = heroStateJumping;
+    }
+}
+
+void _heroHitHeadCheck() {
+    GBUInt8 sensorY;
+    GBUInt8 sensorX;
+    GBUInt8 tileX;
+    GBUInt8 tileY;
+    GBUInt8 attributes;
+    
+    if(_heroY < (32 * 16)) {
+        _heroY = 32 * 16;
+        _heroVelocityY = 0;
+    }
+    
+    if(_heroVelocityY > 0) {
+        return;
+    }
+    
+    sensorY = (_heroY >> 4) - (32);
+    tileY = sensorY >> 4;
+    sensorX = (_heroX >> 4) - (32 - 4);
+    tileX = sensorX >> 4;
+    
+    attributes = mapAttributes[tileX + tileY * 10];
+    if(attributes & 0x01) {
+        _heroY = ((((GBUInt16)tileY + 1) << 4) + 32) << 4;
+        _heroVelocityY = 0;
+    } else {
+        sensorX = (_heroX >> 4) - (32 - 11);
+        tileX = sensorX >> 4;
+        attributes = mapAttributes[tileX + tileY * 10];
+        if(attributes & 0x01) {
+            _heroY = ((((GBUInt16)tileY + 1) << 4) + 32) << 4;
+            _heroVelocityY = 0;
+        }
+    }
+}
+
+void _heroStandCheck() {
+    GBUInt8 sensorY;
+    GBUInt8 sensorX;
+    GBUInt8 tileX;
+    GBUInt8 tileY;
+    GBUInt8 attributes;
+    
+    if(_heroVelocityY < 0) {
+        return;
+    }
+    
+    sensorY = (_heroY >> 4) - (32 - 15);
+    tileY = sensorY >> 4;
+    sensorX = (_heroX >> 4) - (32 - 4);
+    tileX = sensorX >> 4;
+    
+    attributes = mapAttributes[tileX + tileY * 10];
+    if(attributes & 0x01) {
+        _heroY = ((((GBUInt16)tileY - 1) << 4) + 32) << 4;
+        _heroState = heroStateStanding;
+    } else {
+        sensorX = (_heroX >> 4) - (32 - 11);
+        tileX = sensorX >> 4;
+        attributes = mapAttributes[tileX + tileY * 10];
+        if(attributes & 0x01) {
+            _heroY = ((((GBUInt16)tileY - 1) << 4) + 32) << 4;
+            _heroState = heroStateStanding;
+        }
+    }
+}
+
 void _heroUpdateStandingState() {
     if(gbJoypadState & gbJoypadRight) {
         _heroX += 16;
@@ -38,20 +193,17 @@ void _heroUpdateStandingState() {
         _heroX -= 16;
     }
     
+    _heroMapEdgeBonk();
+    _heroWallBonk();
+    
     if(_heroHasReleasedA && (gbJoypadState & gbJoypadA)) {
         _heroJump();
+    } else {
+        _heroFallCheck();
     }
 }
 
 void _heroUpdateJumpingState() {
-    if(gbJoypadState & gbJoypadRight) {
-        _heroX += 16;
-    }
-    
-    if(gbJoypadState & gbJoypadLeft) {
-        _heroX -= 16;
-    }
-    
     if(!(gbJoypadState & gbJoypadA) || _heroVelocityY > 0) {
         _heroIsRisingSlowly = false;
     }
@@ -62,10 +214,19 @@ void _heroUpdateJumpingState() {
         _heroVelocityY = 128;
     }
     
-    if(_heroY >= 2048) {
-        _heroY = 2048;
-        _heroState = heroStateStanding;
+    _heroHitHeadCheck();
+    _heroStandCheck();
+    
+    if(gbJoypadState & gbJoypadRight) {
+        _heroX += 16;
     }
+    
+    if(gbJoypadState & gbJoypadLeft) {
+        _heroX -= 16;
+    }
+    
+    _heroMapEdgeBonk();
+    _heroWallBonk();
 }
 
 void _heroUpdateSpriteAttributes() {
