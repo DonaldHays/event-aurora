@@ -3,6 +3,8 @@
 
 #include <gb/gb.h>
 
+extern GBUInt8 mapAttributes[80];
+
 void gameInit();
 void gameWake();
 void gameSuspend();
