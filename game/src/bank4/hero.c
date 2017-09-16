@@ -2,6 +2,8 @@
 #include "../sprites.h"
 #include "game.h"
 
+#pragma bank 4
+
 // ===
 // Types
 // ===

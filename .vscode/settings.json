@@ -18,6 +18,7 @@
         "mach_voucher_types.h": "c",
         "music_testsong.h": "c",
         "gfx_titletiles.h": "c",
-        "mainmenu.h": "c"
+        "mainmenu.h": "c",
+        "hero.h": "c"
     }
 }
