@@ -3,12 +3,17 @@
 
 #include <gb/gb.h>
 
-extern GBUInt8 mapAttributes[80];
+#define gameMapAttributesWidth 16
+#define gameMapAttributesHeight 12
+#define gameMapAttributesLength (gameMapAttributesWidth * gameMapAttributesHeight)
+
+extern GBUInt8 mapAttributes[gameMapAttributesLength];
 
 void gameInit();
 void gameWake();
 void gameSuspend();
 void gameUpdate();
 void gameUpdateGraphics();
+GBUInt8 gameAttributesAt(GBUInt8 x, GBUInt8 y);
 
 #endif

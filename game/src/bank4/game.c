@@ -20,18 +20,19 @@ MetatileAttributes _metatileAttributes[256];
 // ===
 // Public Variables
 // ===
-GBUInt8 mapAttributes[80];
+GBUInt8 mapAttributes[gameMapAttributesLength];
 
 // ===
 // Public API
 // ===
 void gameInit() {
-    
+    memorySet(mapAttributes, 0, gameMapAttributesLength);
 }
 
 void gameWake() {
     GBUInt8 x, y, index;
     GBUInt8 metatileIndex;
+    GBUInt8 attributesIndex;
     
     gbLCDDisable(); {
         backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
@@ -51,8 +52,9 @@ void gameWake() {
         y = 0;
         for(index = 0; index < 80; index++) {
             metatileIndex = _mapMetatiles[index];
+            attributesIndex = (x + 2) + (y + 2) * gameMapAttributesWidth;
             
-            mapAttributes[index] = _metatileAttributes[metatileIndex];
+            mapAttributes[attributesIndex] = _metatileAttributes[metatileIndex];
             
             gbTileMap0[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][0];
             gbTileMap0[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][1];
@@ -80,4 +82,8 @@ void gameUpdate() {
 
 void gameUpdateGraphics() {
     // gbLogUInt8(gbLCDYCoordinateRegister);
+}
+
+GBUInt8 gameAttributesAt(GBUInt8 x, GBUInt8 y) {
+    return mapAttributes[(x / 16) + (y / 16) * gameMapAttributesWidth];
 }

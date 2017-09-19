@@ -33,81 +33,72 @@ void _heroJump() {
 }
 
 void _heroMapEdgeBonk() {
-    if(_heroX < 32 * 16) {
-        _heroX = 32 * 16;
+    if(_heroX < (32 - 8) * 16) {
+        _heroX = (32 - 8) * 16;
     }
     
-    if(_heroX > (32 + 160 - 16) * 16) {
-        _heroX = (32 + 160 - 16) * 16;
+    if(_heroX > (32 + 8 + 160 - 16) * 16) {
+        _heroX = (32 + 8 + 160 - 16) * 16;
     }
 }
 
 void _heroWallBonk() {
     GBUInt8 sensorY;
     GBUInt8 sensorX;
-    GBUInt8 tileX;
-    GBUInt8 tileY;
     GBUInt8 attributes;
     
-    sensorY = (_heroY >> 4) - 32;
-    tileY = sensorY >> 4;
-    sensorX = (_heroX >> 4) - (32 - 4);
-    tileX = sensorX >> 4;
+    // Check against top of hero
+    sensorY = (_heroY / 16);
     
-    attributes = mapAttributes[tileX + tileY * 10];
+    // Top-Left
+    sensorX = (_heroX / 16) + 4;
+    attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
-        _heroX = ((((GBUInt16)tileX + 1) << 4) + 32 - 4) << 4;
+        _heroX = ((sensorX & 0xF0) + 12) * 16;
     }
     
-    sensorX = (_heroX >> 4) - (32 - 12);
-    tileX = sensorX >> 4;
-    attributes = mapAttributes[tileX + tileY * 10];
+    // Top-Right
+    sensorX = (_heroX / 16) + 12;
+    attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
-        _heroX = ((((GBUInt16)tileX) << 4) + 32 - 12) << 4;
+        _heroX = ((sensorX & 0xF0) - 12) * 16;
     }
     
-    sensorY += 15;
-    if((sensorY >> 4) != tileY) {
-        tileY = sensorY >> 4;
-        sensorX = (_heroX >> 4) - (32 - 4);
-        tileX = sensorX >> 4;
-        
-        attributes = mapAttributes[tileX + tileY * 10];
-        if(attributes & 0x01) {
-            _heroX = ((((GBUInt16)tileX + 1) << 4) + 32 - 4) << 4;
-        }
-        
-        sensorX = (_heroX >> 4) - (32 - 12);
-        tileX = sensorX >> 4;
-        attributes = mapAttributes[tileX + tileY * 10];
-        if(attributes & 0x01) {
-            _heroX = ((((GBUInt16)tileX) << 4) + 32 - 12) << 4;
-        }
+    // Check against bottom of hero
+    sensorY = (_heroY / 16) + 15;
+    
+    // Bottom-Left
+    sensorX = (_heroX / 16) + 4;
+    attributes = gameAttributesAt(sensorX, sensorY);
+    if(attributes & 0x01) {
+        _heroX = ((sensorX & 0xF0) + 12) * 16;
+    }
+    
+    // Bottom-Right
+    sensorX = (_heroX / 16) + 12;
+    attributes = gameAttributesAt(sensorX, sensorY);
+    if(attributes & 0x01) {
+        _heroX = ((sensorX & 0xF0) - 12) * 16;
     }
 }
 
 void _heroFallCheck() {
     GBUInt8 sensorY;
     GBUInt8 sensorX;
-    GBUInt8 tileX;
-    GBUInt8 tileY;
     GBUInt8 attributes;
     GBBool hasFootStanding;
     
     hasFootStanding = false;
     
-    sensorY = (_heroY >> 4) - (32 - 16);
-    tileY = sensorY >> 4;
-    sensorX = (_heroX >> 4) - (32 - 4);
-    tileX = sensorX >> 4;
+    sensorY = (_heroY / 16) + 16;
+    sensorX = (_heroX / 16) + 4;
     
-    attributes = mapAttributes[tileX + tileY * 10];
+    attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
         hasFootStanding = true;
     } else {
-        sensorX = (_heroX >> 4) - (32 - 11);
-        tileX = sensorX >> 4;
-        attributes = mapAttributes[tileX + tileY * 10];
+        sensorX = (_heroX / 16) + 11;
+        attributes = gameAttributesAt(sensorX, sensorY);
         if(attributes & 0x01) {
             hasFootStanding = true;
         }
@@ -122,8 +113,6 @@ void _heroFallCheck() {
 void _heroHitHeadCheck() {
     GBUInt8 sensorY;
     GBUInt8 sensorX;
-    GBUInt8 tileX;
-    GBUInt8 tileY;
     GBUInt8 attributes;
     
     if(_heroY < (32 * 16)) {
@@ -135,21 +124,18 @@ void _heroHitHeadCheck() {
         return;
     }
     
-    sensorY = (_heroY >> 4) - (32);
-    tileY = sensorY >> 4;
-    sensorX = (_heroX >> 4) - (32 - 4);
-    tileX = sensorX >> 4;
+    sensorY = (_heroY / 16);
+    sensorX = (_heroX / 16) + 4;
     
-    attributes = mapAttributes[tileX + tileY * 10];
+    attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
-        _heroY = ((((GBUInt16)tileY + 1) << 4) + 32) << 4;
+        _heroY = ((sensorY & 0xF0) + 16) * 16;
         _heroVelocityY = 0;
     } else {
-        sensorX = (_heroX >> 4) - (32 - 11);
-        tileX = sensorX >> 4;
-        attributes = mapAttributes[tileX + tileY * 10];
+        sensorX = (_heroX / 16) + 11;
+        attributes = gameAttributesAt(sensorX, sensorY);
         if(attributes & 0x01) {
-            _heroY = ((((GBUInt16)tileY + 1) << 4) + 32) << 4;
+            _heroY = ((sensorY & 0xF0) + 16) * 16;
             _heroVelocityY = 0;
         }
     }
@@ -158,29 +144,24 @@ void _heroHitHeadCheck() {
 void _heroStandCheck() {
     GBUInt8 sensorY;
     GBUInt8 sensorX;
-    GBUInt8 tileX;
-    GBUInt8 tileY;
     GBUInt8 attributes;
     
     if(_heroVelocityY < 0) {
         return;
     }
     
-    sensorY = (_heroY >> 4) - (32 - 15);
-    tileY = sensorY >> 4;
-    sensorX = (_heroX >> 4) - (32 - 4);
-    tileX = sensorX >> 4;
+    sensorY = (_heroY / 16) + 16;
+    sensorX = (_heroX / 16) + 4;
     
-    attributes = mapAttributes[tileX + tileY * 10];
+    attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
-        _heroY = ((((GBUInt16)tileY - 1) << 4) + 32) << 4;
+        _heroY = ((sensorY & 0xF0) - 16) * 16;
         _heroState = heroStateStanding;
     } else {
-        sensorX = (_heroX >> 4) - (32 - 11);
-        tileX = sensorX >> 4;
-        attributes = mapAttributes[tileX + tileY * 10];
+        sensorX = (_heroX / 16) + 11;
+        attributes = gameAttributesAt(sensorX, sensorY);
         if(attributes & 0x01) {
-            _heroY = ((((GBUInt16)tileY - 1) << 4) + 32) << 4;
+            _heroY = ((sensorY & 0xF0) - 16) * 16;
             _heroState = heroStateStanding;
         }
     }
