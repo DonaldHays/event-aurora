@@ -25,6 +25,7 @@ MetatileAttributes _metatileAttributes[256];
 GBUInt8 mapAttributes[gameMapAttributesLength];
 GBUInt8 metamapX;
 GBUInt8 metamapY;
+GBBool shouldTransitionToNewMap;
 
 // ===
 // Public API
@@ -32,6 +33,9 @@ GBUInt8 metamapY;
 void gameInit() {
     metamapX = 1;
     metamapY = 0;
+    heroSpawnX = 16;
+    heroSpawnY = 64;
+    shouldTransitionToNewMap = false;
     memorySet(mapAttributes, 0, gameMapAttributesLength);
 }
 
@@ -47,6 +51,8 @@ void gameWake() {
         backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
         object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
         object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        
+        spritesClear();
         
         memoryCopyBanked(gbTileMemory, heroTiles, heroTilesLength, heroTilesBank);
         
@@ -86,7 +92,12 @@ void gameSuspend() {
 }
 
 void gameUpdate() {
-    heroUpdate();
+    if(shouldTransitionToNewMap) {
+        gameWake();
+        shouldTransitionToNewMap = false;
+    } else {
+        heroUpdate();
+    }
 }
 
 void gameUpdateGraphics() {

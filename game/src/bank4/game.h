@@ -10,6 +10,7 @@
 extern GBUInt8 mapAttributes[gameMapAttributesLength];
 extern GBUInt8 metamapX;
 extern GBUInt8 metamapY;
+extern GBBool shouldTransitionToNewMap;
 
 void gameInit();
 void gameWake();

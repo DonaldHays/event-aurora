@@ -1,6 +1,7 @@
 #include "hero.h"
 #include "../sprites.h"
 #include "game.h"
+#include "metamap.h"
 
 #pragma bank 4
 
@@ -21,6 +22,12 @@ GBInt16 _heroVelocityY;
 GBBool _heroIsRisingSlowly;
 GBBool _heroHasReleasedA;
 HeroState _heroState;
+
+// ===
+// Public Variables
+// ===
+GBUInt8 heroSpawnX;
+GBUInt8 heroSpawnY;
 
 // ===
 // Private API
@@ -193,6 +200,26 @@ void _heroWallJumpCheck() {
     }
 }
 
+void _heroTransitionCheck() {
+    if((_heroX / 16) < 28) {
+        if(canNavigateLeft(metamapX, metamapY)) {
+            metamapX--;
+            heroSpawnY = (_heroY / 16) - 32;
+            heroSpawnX = 144;
+            shouldTransitionToNewMap = true;
+        }
+    }
+    
+    if((_heroX / 16) > 180) {
+        if(canNavigateRight(metamapX, metamapY)) {
+            metamapX++;
+            heroSpawnY = (_heroY / 16) - 32;
+            heroSpawnX = 0;
+            shouldTransitionToNewMap = true;
+        }
+    }
+}
+
 void _heroUpdateStandingState() {
     if(gbJoypadState & gbJoypadRight) {
         _heroX += 16;
@@ -210,6 +237,8 @@ void _heroUpdateStandingState() {
     } else {
         _heroFallCheck();
     }
+    
+    _heroTransitionCheck();
 }
 
 void _heroUpdateJumpingState() {
@@ -238,6 +267,8 @@ void _heroUpdateJumpingState() {
     
     _heroMapEdgeBonk();
     _heroWallBonk();
+    
+    _heroTransitionCheck();
 }
 
 void _heroUpdateSpriteAttributes() {
@@ -271,8 +302,8 @@ void _heroUpdateSpriteAttributes() {
 // Public API
 // ===
 void heroSpawn() {
-    _heroX = (32 + 16) * 16;
-    _heroY = (32 + 64) * 16;
+    _heroX = (32 + (GBUInt16)heroSpawnX) * 16;
+    _heroY = (32 + (GBUInt16)heroSpawnY) * 16;
     _heroVelocityY = 0;
     _heroState = heroStateStanding;
     _heroIsRisingSlowly = false;
