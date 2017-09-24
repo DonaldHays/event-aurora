@@ -167,6 +167,32 @@ void _heroStandCheck() {
     }
 }
 
+void _heroWallJumpCheck() {
+    GBUInt8 sensorY;
+    GBUInt8 sensorX;
+    GBUInt8 attributes;
+    
+    if((gbJoypadPressedSinceLastUpdate & gbJoypadA) == 0) {
+        return;
+    }
+    
+    // Wall-jump requires bottom of sprite to be near wall
+    sensorY = (_heroY / 16) + 15;
+    
+    if(gbJoypadState & gbJoypadRight) {
+        sensorX = _heroX / 16;
+    } else if(gbJoypadState & gbJoypadLeft) {
+        sensorX = (_heroX / 16) + 16;
+    } else {
+        return;
+    }
+    
+    attributes = gameAttributesAt(sensorX, sensorY);
+    if(attributes & 0x01) {
+        _heroJump();
+    }
+}
+
 void _heroUpdateStandingState() {
     if(gbJoypadState & gbJoypadRight) {
         _heroX += 16;
@@ -187,6 +213,8 @@ void _heroUpdateStandingState() {
 }
 
 void _heroUpdateJumpingState() {
+    _heroWallJumpCheck();
+    
     if(!(gbJoypadState & gbJoypadA) || _heroVelocityY > 0) {
         _heroIsRisingSlowly = false;
     }

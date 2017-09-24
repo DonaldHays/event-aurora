@@ -3,6 +3,7 @@
 #include "../data/gfx_heroTiles.h"
 #include "../data/meta_castleMetatiles.h"
 #include "../data/map_sample.h"
+#include "../data/map_walljump.h"
 #include "../memory.h"
 #include "../palette.h"
 #include "../sprites.h"
@@ -42,7 +43,8 @@ void gameWake() {
         memoryCopyBanked(gbTileMemory, heroTiles, heroTilesLength, heroTilesBank);
         
         memoryCopyBanked(gbTileMemory + 256 * 16, castleTiles, castleTilesLength, castleTilesBank);
-        memoryCopyBanked(_mapMetatiles, sampleMapIndices, 80, sampleMapBank);
+        // memoryCopyBanked(_mapMetatiles, sampleMapIndices, 80, sampleMapBank);
+        memoryCopyBanked(_mapMetatiles, walljumpMapIndices, 80, walljumpMapBank);
         memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
         memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
         
