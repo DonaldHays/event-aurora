@@ -245,7 +245,9 @@ void _heroUpdateSpriteAttributes() {
 void heroSpawn() {
     _heroX = (32 + 16) * 16;
     _heroY = (32 + 64) * 16;
+    _heroVelocityY = 0;
     _heroState = heroStateStanding;
+    _heroIsRisingSlowly = false;
     _heroHasReleasedA = false;
 }
 

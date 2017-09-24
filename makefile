@@ -34,15 +34,16 @@ BANK1_GFX = \
 	game/data/gfx/heroTiles.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
-BANK1_MAPS = \
-	game/data/maps/sample.json
-BANK1_SRCS += $(patsubst game/data/maps/%.json,game/src/data/map_%.c,$(BANK1_MAPS))
-
 BANK2_SONGS = \
 	game/data/music/testSong.txt \
 	game/data/music/titleSong.txt \
 	game/data/music/testBoing.txt
 BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
+
+BANK2_MAPS = \
+	game/data/maps/sample.json \
+	game/data/maps/walljump.json
+BANK2_SRCS += $(patsubst game/data/maps/%.json,game/src/data/map_%.c,$(BANK2_MAPS))
 
 BANK2_METATILES = \
 	game/data/metatiles/castleMetatiles.png
