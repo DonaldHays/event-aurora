@@ -8,6 +8,8 @@
 #define gameMapAttributesLength (gameMapAttributesWidth * gameMapAttributesHeight)
 
 extern GBUInt8 mapAttributes[gameMapAttributesLength];
+extern GBUInt8 metamapX;
+extern GBUInt8 metamapY;
 
 void gameInit();
 void gameWake();

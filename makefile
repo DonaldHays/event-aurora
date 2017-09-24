@@ -55,7 +55,8 @@ BANK3_SRCS = $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK3_GFX))
 
 BANK4_SRCS = \
 	game/src/bank4/game.c \
-	game/src/bank4/hero.c
+	game/src/bank4/hero.c \
+	game/src/bank4/metamap.c
 
 GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS) $(BANK3_SRCS) $(BANK4_SRCS)
 

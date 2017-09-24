@@ -7,6 +7,7 @@
 #include "../memory.h"
 #include "../palette.h"
 #include "../sprites.h"
+#include "metamap.h"
 #include "hero.h"
 
 #pragma bank 4
@@ -22,11 +23,15 @@ MetatileAttributes _metatileAttributes[256];
 // Public Variables
 // ===
 GBUInt8 mapAttributes[gameMapAttributesLength];
+GBUInt8 metamapX;
+GBUInt8 metamapY;
 
 // ===
 // Public API
 // ===
 void gameInit() {
+    metamapX = 1;
+    metamapY = 0;
     memorySet(mapAttributes, 0, gameMapAttributesLength);
 }
 
@@ -34,8 +39,11 @@ void gameWake() {
     GBUInt8 x, y, index;
     GBUInt8 metatileIndex;
     GBUInt8 attributesIndex;
+    MetamapTile const * metamapTile;
     
     gbLCDDisable(); {
+        metamapTile = metamapTileAt(metamapX, metamapY);
+        
         backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
         object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
         object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
@@ -43,8 +51,7 @@ void gameWake() {
         memoryCopyBanked(gbTileMemory, heroTiles, heroTilesLength, heroTilesBank);
         
         memoryCopyBanked(gbTileMemory + 256 * 16, castleTiles, castleTilesLength, castleTilesBank);
-        // memoryCopyBanked(_mapMetatiles, sampleMapIndices, 80, sampleMapBank);
-        memoryCopyBanked(_mapMetatiles, walljumpMapIndices, 80, walljumpMapBank);
+        memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
         memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
         memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
         
