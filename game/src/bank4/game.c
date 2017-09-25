@@ -2,8 +2,6 @@
 #include "../data/gfx_castleTiles.h"
 #include "../data/gfx_heroTiles.h"
 #include "../data/meta_castleMetatiles.h"
-#include "../data/map_sample.h"
-#include "../data/map_walljump.h"
 #include "../memory.h"
 #include "../palette.h"
 #include "../sprites.h"

@@ -9,7 +9,7 @@ typedef struct {
     GBUInt8 padding;
 } MetamapTile;
 
-#define metamapWidth 2
+#define metamapWidth 3
 #define metamapHeight 1
 
 extern const MetamapTile metamapTiles[metamapWidth * metamapHeight];

@@ -2,6 +2,7 @@
 
 #include "../data/map_sample.h"
 #include "../data/map_walljump.h"
+#include "../data/map_testright.h"
 
 #pragma bank 4
 
@@ -11,7 +12,8 @@
 
 const MetamapTile metamapTiles[metamapWidth * metamapHeight] = {
     { walljumpMapIndices, walljumpMapBank, 0 },
-    { sampleMapIndices, sampleMapBank, 0 }
+    { sampleMapIndices, sampleMapBank, 0 },
+    { testrightMapIndices, testrightMapBank, 0 },
 };
 
 // ===

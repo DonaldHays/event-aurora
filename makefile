@@ -42,7 +42,8 @@ BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SO
 
 BANK2_MAPS = \
 	game/data/maps/sample.json \
-	game/data/maps/walljump.json
+	game/data/maps/walljump.json \
+	game/data/maps/testright.json
 BANK2_SRCS += $(patsubst game/data/maps/%.json,game/src/data/map_%.c,$(BANK2_MAPS))
 
 BANK2_METATILES = \
