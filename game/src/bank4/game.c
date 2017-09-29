@@ -30,7 +30,7 @@ GBBool shouldTransitionToNewMap;
 // ===
 void gameInit() {
     metamapX = 1;
-    metamapY = 0;
+    metamapY = 1;
     heroSpawnX = 16;
     heroSpawnY = 64;
     shouldTransitionToNewMap = false;

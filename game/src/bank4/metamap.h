@@ -10,7 +10,7 @@ typedef struct {
 } MetamapTile;
 
 #define metamapWidth 3
-#define metamapHeight 1
+#define metamapHeight 2
 
 extern const MetamapTile metamapTiles[metamapWidth * metamapHeight];
 
