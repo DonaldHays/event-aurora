@@ -268,8 +268,8 @@ void _heroUpdateJumpingState() {
     
     _heroY += _heroVelocityY;
     _heroVelocityY += _heroIsRisingSlowly ? 2 : 4;
-    if(_heroVelocityY > 128) {
-        _heroVelocityY = 128;
+    if(_heroVelocityY > 96) {
+        _heroVelocityY = 96;
     }
     
     _heroHitHeadCheck();
