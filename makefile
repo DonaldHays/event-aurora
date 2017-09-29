@@ -44,7 +44,8 @@ BANK2_MAPS = \
 	game/data/maps/sample.json \
 	game/data/maps/walljump.json \
 	game/data/maps/testright.json \
-	game/data/maps/abovesample.json
+	game/data/maps/abovesample.json \
+	game/data/maps/topleft.json
 BANK2_SRCS += $(patsubst game/data/maps/%.json,game/src/data/map_%.c,$(BANK2_MAPS))
 
 BANK2_METATILES = \

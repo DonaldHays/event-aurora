@@ -4,6 +4,7 @@
 #include "../data/map_walljump.h"
 #include "../data/map_testright.h"
 #include "../data/map_abovesample.h"
+#include "../data/map_topleft.h"
 
 #pragma bank 4
 
@@ -12,7 +13,7 @@
 // ===
 
 const MetamapTile metamapTiles[metamapWidth * metamapHeight] = {
-    { null, 0, 0 },
+    { topleftMapIndices, topleftMapBank, 0 },
     { abovesampleMapIndices, abovesampleMapBank, 0 },
     { null, 0, 0 },
     { walljumpMapIndices, walljumpMapBank, 0 },
