@@ -122,8 +122,8 @@ void _heroHitHeadCheck() {
     GBUInt8 sensorX;
     GBUInt8 attributes;
     
-    if(_heroY < (32 * 16)) {
-        _heroY = 32 * 16;
+    if(_heroY < (24 * 16)) {
+        _heroY = 24 * 16;
         _heroVelocityY = 0;
     }
     
@@ -218,6 +218,24 @@ void _heroTransitionCheck() {
             shouldTransitionToNewMap = true;
         }
     }
+    
+    if((_heroY / 16) < 28) {
+        if(canNavigateUp(metamapX, metamapY)) {
+            metamapY--;
+            heroSpawnY = 112;
+            heroSpawnX = (_heroX / 16) - 32;
+            shouldTransitionToNewMap = true;
+        }
+    }
+    
+    if((_heroY / 16) > 148) {
+        if(canNavigateDown(metamapX, metamapY)) {
+            metamapY++;
+            heroSpawnY = 0;
+            heroSpawnX = (_heroX / 16) - 32;
+            shouldTransitionToNewMap = true;
+        }
+    }
 }
 
 void _heroUpdateStandingState() {
@@ -304,10 +322,17 @@ void _heroUpdateSpriteAttributes() {
 void heroSpawn() {
     _heroX = (32 + (GBUInt16)heroSpawnX) * 16;
     _heroY = (32 + (GBUInt16)heroSpawnY) * 16;
-    _heroVelocityY = 0;
-    _heroState = heroStateStanding;
+    if(heroSpawnY != 0) {
+        _heroVelocityY = 0;
+        _heroState = heroStateStanding;
+    }
     _heroIsRisingSlowly = false;
     _heroHasReleasedA = false;
+    
+    if(heroSpawnY > 104) {
+        _heroJump();
+        _heroVelocityY = -40;
+    }
 }
 
 void heroUpdate() {
