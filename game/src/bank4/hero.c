@@ -307,12 +307,12 @@ void _heroUpdateSpriteAttributes() {
     
     spriteAttributes[2].x = heroX;
     spriteAttributes[2].y = heroY + 8;
-    spriteAttributes[2].tileIndex = 2;
+    spriteAttributes[2].tileIndex = 6;
     spriteAttributes[2].attributes = 0;
     
     spriteAttributes[3].x = heroX + 8;
     spriteAttributes[3].y = heroY + 8;
-    spriteAttributes[3].tileIndex = 3;
+    spriteAttributes[3].tileIndex = 7;
     spriteAttributes[3].attributes = 0;
 }
 
