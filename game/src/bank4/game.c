@@ -33,6 +33,7 @@ void gameInit() {
     metamapY = 1;
     heroSpawnX = 16;
     heroSpawnY = 64;
+    heroSpawnFaceLeft = false;
     shouldTransitionToNewMap = false;
     memorySet(mapAttributes, 0, gameMapAttributesLength);
 }

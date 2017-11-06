@@ -124,7 +124,7 @@ game/src/data/music_%.c: game/data/music/%.txt
 	$(ENSURE_DIRECTORY)
 	node musicc $< $@
 
-game/src/data/gfx_%.c: game/data/gfx/%.png
+game/src/data/gfx_%.c: game/data/gfx/%.png game/data/gfx/%.meta.json
 	$(ENSURE_DIRECTORY)
 	node img2gb -n $(notdir $(basename $<)) $< $@
 

@@ -39,7 +39,11 @@ function parse(data) {
     }
   }
   
-  return bytes;
+  return {
+    "width" : tilesWide,
+    "height" : tilesHigh,
+    "bytes" : bytes
+  }
 }
 
 module.exports = parse;

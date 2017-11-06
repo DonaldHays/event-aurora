@@ -1,3 +1,53 @@
 {
-  "bank" : 1
+  "bank" : 1,
+  "size" : "2x2",
+  "frames" : {
+    "idle1" : {
+      "indices" : {
+        "tl" : {"x" : 0, "y" : 0},
+        "tr" : {"x" : 1, "y" : 0},
+        "bl" : {"x" : 0, "y" : 1},
+        "br" : {"x" : 1, "y" : 1}
+      }
+    },
+    "idle2" : {
+      "indices" : {
+        "tl" : {"x" : 2, "y" : 0},
+        "tr" : {"x" : 3, "y" : 0},
+        "bl" : {"x" : 2, "y" : 1},
+        "br" : {"x" : 3, "y" : 1}
+      }
+    },
+    "idle3" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 4, "y" : 1},
+        "br" : {"x" : 5, "y" : 1}
+      }
+    }
+  },
+  "animations" : {
+    "idle" : {
+      "next" : "idle",
+      "frames" : [
+        {
+          "frame" : "idle1",
+          "duration" : 42
+        },
+        {
+          "frame" : "idle2",
+          "duration" : 9
+        },
+        {
+          "frame" : "idle3",
+          "duration" : 42
+        },
+        {
+          "frame" : "idle2",
+          "duration" : 9
+        }
+      ]
+    }
+  }
 }

@@ -2,6 +2,7 @@
 #include "../sprites.h"
 #include "game.h"
 #include "metamap.h"
+#include "../data/gfx_heroTiles.h"
 
 #pragma bank 4
 
@@ -21,6 +22,7 @@ GBUInt16 _heroY;
 GBInt16 _heroVelocityY;
 GBBool _heroIsRisingSlowly;
 GBBool _heroHasReleasedA;
+GBBool _heroIsFacingLeft;
 HeroState _heroState;
 
 // ===
@@ -28,6 +30,7 @@ HeroState _heroState;
 // ===
 GBUInt8 heroSpawnX;
 GBUInt8 heroSpawnY;
+GBUInt8 heroSpawnFaceLeft;
 
 // ===
 // Private API
@@ -206,6 +209,7 @@ void _heroTransitionCheck() {
             metamapX--;
             heroSpawnY = (_heroY / 16) - 32;
             heroSpawnX = 144;
+            heroSpawnFaceLeft = _heroIsFacingLeft;
             shouldTransitionToNewMap = true;
         }
     }
@@ -215,6 +219,7 @@ void _heroTransitionCheck() {
             metamapX++;
             heroSpawnY = (_heroY / 16) - 32;
             heroSpawnX = 0;
+            heroSpawnFaceLeft = _heroIsFacingLeft;
             shouldTransitionToNewMap = true;
         }
     }
@@ -224,6 +229,7 @@ void _heroTransitionCheck() {
             metamapY--;
             heroSpawnY = 112;
             heroSpawnX = (_heroX / 16) - 32;
+            heroSpawnFaceLeft = _heroIsFacingLeft;
             shouldTransitionToNewMap = true;
         }
     }
@@ -233,6 +239,7 @@ void _heroTransitionCheck() {
             metamapY++;
             heroSpawnY = 0;
             heroSpawnX = (_heroX / 16) - 32;
+            heroSpawnFaceLeft = _heroIsFacingLeft;
             shouldTransitionToNewMap = true;
         }
     }
@@ -240,10 +247,12 @@ void _heroTransitionCheck() {
 
 void _heroUpdateStandingState() {
     if(gbJoypadState & gbJoypadRight) {
+        _heroIsFacingLeft = false;
         _heroX += 16;
     }
     
     if(gbJoypadState & gbJoypadLeft) {
+        _heroIsFacingLeft = true;
         _heroX -= 16;
     }
     
@@ -276,10 +285,12 @@ void _heroUpdateJumpingState() {
     _heroStandCheck();
     
     if(gbJoypadState & gbJoypadRight) {
+        _heroIsFacingLeft = false;
         _heroX += 16;
     }
     
     if(gbJoypadState & gbJoypadLeft) {
+        _heroIsFacingLeft = true;
         _heroX -= 16;
     }
     
@@ -295,25 +306,7 @@ void _heroUpdateSpriteAttributes() {
     heroX = (_heroX >> 4) - 24;
     heroY = (_heroY >> 4);
     
-    spriteAttributes[0].x = heroX;
-    spriteAttributes[0].y = heroY;
-    spriteAttributes[0].tileIndex = 0;
-    spriteAttributes[0].attributes = 0;
-    
-    spriteAttributes[1].x = heroX + 8;
-    spriteAttributes[1].y = heroY;
-    spriteAttributes[1].tileIndex = 1;
-    spriteAttributes[1].attributes = 0;
-    
-    spriteAttributes[2].x = heroX;
-    spriteAttributes[2].y = heroY + 8;
-    spriteAttributes[2].tileIndex = 6;
-    spriteAttributes[2].attributes = 0;
-    
-    spriteAttributes[3].x = heroX + 8;
-    spriteAttributes[3].y = heroY + 8;
-    spriteAttributes[3].tileIndex = 7;
-    spriteAttributes[3].attributes = 0;
+    spritesWriteFrame2x2(heroTilesFrames, &spriteAttributes[0], 0, heroTilesBank, 0, heroX, heroY, spriteAttributesMake(_heroIsFacingLeft, 0));
 }
 
 // ===
@@ -328,6 +321,7 @@ void heroSpawn() {
     }
     _heroIsRisingSlowly = false;
     _heroHasReleasedA = false;
+    _heroIsFacingLeft = heroSpawnFaceLeft;
     
     if(heroSpawnY > 104) {
         _heroJump();

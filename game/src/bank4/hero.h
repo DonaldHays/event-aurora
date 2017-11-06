@@ -5,6 +5,7 @@
 
 extern GBUInt8 heroSpawnX;
 extern GBUInt8 heroSpawnY;
+extern GBUInt8 heroSpawnFaceLeft;
 
 void heroSpawn();
 void heroUpdate();

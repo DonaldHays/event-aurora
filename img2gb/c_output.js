@@ -13,13 +13,33 @@ function processHeader(filePath, bytes, options) {
   output.push(`#define image_${options["name"]}_h`);
   output.push("");
   
+  output.push(`#include <gb/gb.h>`);
+  output.push(`#include "../sprites.h"`);
+  output.push(``);
+  
   if(options["bank"] !== undefined) {
     output.push(`#define ${options["name"]}Bank ${options["bank"]}`);
     output.push("");
   }
   
+  if(options["frames"] !== undefined) {
+    output.push(`/** Frame definitions. */`);
+    output.push(`extern const SpriteFrame2x2 ${options["name"]}Frames[];`);
+    output.push(``);
+  }
+  
+  if(options["animations"] !== undefined) {
+    output.push(`/** Animation definitions. */`);
+    for (const key in options["animations"]) {
+      if (options["animations"].hasOwnProperty(key)) {
+        output.push(`extern const SpriteAnimation ${options["name"]}Animation_${key};`);
+      }
+    }
+    output.push(``);
+  }
+  
   output.push(`/** Game Boy-format tile data. */`);
-  output.push(`extern const unsigned char ${options["name"]}[];`);
+  output.push(`extern const GBUInt8 ${options["name"]}[];`);
   output.push("");
   
   output.push(`/** The number of tiles in \`${options["name"]}\`. */`);
@@ -51,7 +71,42 @@ function processImplementation(filePath, bytes, options) {
     output.push("");
   }
   
-  output.push(`const unsigned char ${options["name"]}[] = {`);
+  if(options["frames"] !== undefined) {
+    output.push(`const SpriteFrame2x2 ${options["name"]}Frames[] = {`);
+    options["frames"].forEach((frame, index) => {
+      const bytes = [frame["tl"], frame["tr"], frame["bl"], frame["br"]];
+      output.push(`  { ${bytes.map((byte) => {return "0x" + formatter.toHex(byte)}).join(", ")} }${index == options["frames"].length - 1 ? "" : ","}`);
+    });
+    output.push(`};`)
+    output.push(``);
+  }
+  
+  if(options["animations"] !== undefined) {
+    for (const key in options["animations"]) {
+      if (options["animations"].hasOwnProperty(key)) {
+        const animation = options["animations"][key];
+        output.push(`const SpriteAnimationFrame ${options["name"]}AnimationFrames_${key}[] = {`);
+        animation["frames"].forEach((frame, index) => {
+          output.push(`  { ${options["frameNames"].indexOf(frame["frame"])}, ${frame["duration"]} }${index == animation["frames"].length - 1 ? "" : ","}`);
+        });
+        output.push(`};`);
+        output.push(``);
+        
+        output.push(`const SpriteAnimation ${options["name"]}Animation_${key} = {`);
+        if(animation["next"]) {
+          output.push(`  &${options["name"]}Animation_${animation["next"]},`)
+        } else {
+          output.push(`  0,`);
+        }
+        output.push(`  ${animation["frames"].length},`);
+        output.push(`  ${options["name"]}AnimationFrames_${key}`);
+        output.push(`};`);
+        output.push(``);
+      }
+    }
+  }
+  
+  output.push(`const GBUInt8 ${options["name"]}[] = {`);
   let index = 0;
   while(index < bytes.length) {
     let elements = [];

@@ -10,10 +10,33 @@ typedef struct {
     GBUInt8 attributes;
 } SpriteAttributes;
 
+typedef struct {
+    GBUInt8 topLeftIndex;
+    GBUInt8 topRightIndex;
+    GBUInt8 bottomLeftIndex;
+    GBUInt8 bottomRightIndex;
+} SpriteFrame2x2;
+
+typedef struct {
+    GBUInt8 frameIndex;
+    GBUInt8 duration;
+} SpriteAnimationFrame;
+
+typedef struct SpriteAnimation SpriteAnimation;
+
+struct SpriteAnimation {
+    SpriteAnimation * next;
+    GBUInt8 numberOfFrames;
+    SpriteAnimationFrame * frames;
+};
+
+#define spriteAttributesMake(flipX, palette) (((flipX) << 5) | ((palette) << 4))
+
 extern volatile SpriteAttributes * spriteAttributes;
 
 void spritesInit();
 void spritesClear();
 void spritesWriteToOAM();
+void spritesWriteFrame2x2(SpriteFrame2x2 * frames, SpriteAttributes * spriteAttributes, GBUInt8 frameIndex, GBUInt8 bank, GBUInt8 tileOffset, GBUInt8 x, GBUInt8 y, GBBool flipX);
 
 #endif
