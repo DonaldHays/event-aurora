@@ -70,3 +70,56 @@ void spritesWriteFrame2x2(SpriteFrame2x2 * frames, SpriteAttributes * spriteAttr
         *(attributePointer++) = attributes;
     } banksROMSet(currentBank);
 }
+
+void spritesBeginAnimation(SpriteAnimationState * state, SpriteAnimation * animation, GBUInt8 bank) {
+    GBUInt8 currentBank;
+    
+    currentBank = banksROMGet();
+    
+    banksROMSet(bank); {
+        state->animation = animation;
+        state->frameIndex = 0;
+        state->timeUntilNextFrame = animation->frames[0].duration;
+        state->bank = bank;
+    } banksROMSet(currentBank);
+}
+
+void spritesAnimationUpdate(SpriteAnimationState * state) {
+    GBUInt8 currentBank;
+    
+    if(state->animation == null) {
+        return;
+    }
+    
+    currentBank = banksROMGet();
+    
+    banksROMSet(state->bank); {
+        if(state->timeUntilNextFrame != 0) {
+            state->timeUntilNextFrame -= 1;
+            
+            if(state->timeUntilNextFrame == 0) {
+                if(state->frameIndex + 1 != state->animation->numberOfFrames) {
+                    state->frameIndex += 1;
+                    state->timeUntilNextFrame = state->animation->frames[state->frameIndex].duration;
+                } else if(state->animation->next != null) {
+                    state->animation = state->animation->next;
+                    state->frameIndex = 0;
+                    state->timeUntilNextFrame = state->animation->frames[0].duration;
+                }
+            }
+        }
+    } banksROMSet(currentBank);
+}
+
+GBUInt8 spritesAnimationCurrentFrameIndex(SpriteAnimationState * state) {
+    GBUInt8 currentBank;
+    GBUInt8 frameIndex;
+    
+    currentBank = banksROMGet();
+    
+    banksROMSet(state->bank); {
+        frameIndex = state->animation->frames[state->frameIndex].frameIndex;
+    } banksROMSet(currentBank);
+    
+    return frameIndex;
+}

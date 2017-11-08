@@ -1,6 +1,7 @@
 // Place your settings in this file to overwrite the default settings
 {
     "editor.tabSize": 4,
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
     "files.associations": {
         "gb.h": "c",
         "registers.h": "c",

@@ -24,6 +24,7 @@ GBBool _heroIsRisingSlowly;
 GBBool _heroHasReleasedA;
 GBBool _heroIsFacingLeft;
 HeroState _heroState;
+SpriteAnimationState _heroAnimationState;
 
 // ===
 // Public Variables
@@ -306,13 +307,15 @@ void _heroUpdateSpriteAttributes() {
     heroX = (_heroX >> 4) - 24;
     heroY = (_heroY >> 4);
     
-    spritesWriteFrame2x2(heroTilesFrames, &spriteAttributes[0], 0, heroTilesBank, 0, heroX, heroY, spriteAttributesMake(_heroIsFacingLeft, 0));
+    spritesAnimationUpdate(&_heroAnimationState);
+    spritesWriteFrame2x2(&heroTilesFrames[spritesAnimationCurrentFrameIndex(&_heroAnimationState)], &spriteAttributes[0], 0, heroTilesBank, 0, heroX, heroY, spriteAttributesMake(_heroIsFacingLeft, 0));
 }
 
 // ===
 // Public API
 // ===
 void heroSpawn() {
+    spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_idle, heroTilesBank);
     _heroX = (32 + (GBUInt16)heroSpawnX) * 16;
     _heroY = (32 + (GBUInt16)heroSpawnY) * 16;
     if(heroSpawnY != 0) {
