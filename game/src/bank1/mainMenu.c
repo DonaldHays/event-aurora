@@ -214,7 +214,7 @@ void mainMenuUpdate() {
     _mainMenuUpdatePressStartCycle();
     _mainMenuUpdateFadeState();
     
-    if(gbJoypadPressedSinceLastUpdate & gbJoypadStart) {
+    if(gbJoypadPressedSinceLastUpdate & (gbJoypadStart | gbJoypadA)) {
         if(_mainMenuFadeStateState() == _mainMenuFadeStateIdle) {
             gbLog("TODO: Play fade out tone");
             audioPlayComposition(null, 0, audioLayerMusic, 0);
@@ -222,9 +222,9 @@ void mainMenuUpdate() {
         }
     }
     
-    if(gbJoypadPressedSinceLastUpdate & gbJoypadA) {
-        audioPlayComposition(&testBoing, testBoingBank, audioLayerSound, 0);
-    }
+    // if(gbJoypadPressedSinceLastUpdate & gbJoypadA) {
+        // audioPlayComposition(&testBoing, testBoingBank, audioLayerSound, 0);
+    // }
 }
 
 void mainMenuUpdateGraphics() {
