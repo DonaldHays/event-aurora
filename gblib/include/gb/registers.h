@@ -20,6 +20,8 @@
 #define gbObject0PaletteRegister *((GBRegister)0xFF48)
 #define gbObject1PaletteRegister *((GBRegister)0xFF49)
 #define gbDividerRegister *((GBRegister)0xFF04)
+#define gbTimerModuloRegister *((GBRegister)0xFF06)
+#define gbTimerControlRegister *((GBRegister)0xFF07)
 #define gbInterruptFlagRegister *((GBRegister)0xFF0F)
 #define gbTone1SweepRegister *((GBRegister)0xFF10)
 #define gbTone1PatternRegister *((GBRegister)0xFF11)

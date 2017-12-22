@@ -11,11 +11,31 @@
 #pragma bank 4
 
 // ===
+// Types
+// ===
+typedef enum {
+    gameLoadingStageGameplay,
+    gameLoadingStageCopyingHero,
+    gameLoadingStageCopyingTiles,
+    gameLoadingStageWritingBG
+} GameLoadingStage;
+
+// ===
+// Private Defines
+// ===
+#define gameTileMapStagingLength (gbTileMapWidth * 18)
+
+// ===
 // Private Variables
 // ===
 GBUInt8 _mapMetatiles[80];
+GBUInt8 _tileMapStaging[gameTileMapStagingLength];
 MetatileIndices _metatileIndices[256];
 MetatileAttributes _metatileAttributes[256];
+GBUInt8 const * _gameLoadedTiles;
+
+GameLoadingStage _gameLoadingStage;
+GBUInt16 _gameLoadingOffset;
 
 // ===
 // Public Variables
@@ -35,6 +55,10 @@ void gameInit() {
     heroSpawnY = 64;
     heroSpawnFaceLeft = false;
     shouldTransitionToNewMap = false;
+    _gameLoadedTiles = null;
+    _gameLoadingStage = gameLoadingStageCopyingHero;
+    _gameLoadingOffset = 0;
+    memorySet(_tileMapStaging, 0x7F, gameTileMapStagingLength);
     memorySet(mapAttributes, 0, gameMapAttributesLength);
 }
 
@@ -44,46 +68,40 @@ void gameWake() {
     GBUInt8 attributesIndex;
     MetamapTile const * metamapTile;
     
-    gbLCDDisable(); {
-        // If I disable the sprite OAM copy in main, I think I can get away with copying 64 bytes per vblank.
+    metamapTile = metamapTileAt(metamapX, metamapY);
+    
+    spritesClear();
+    
+    memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
+    memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
+    memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
+    
+    _gameLoadingStage = gameLoadingStageCopyingHero;
+    _gameLoadingOffset = 0;
+    
+    spritesShouldSuppressOAMTransfer = true;
+    
+    memorySet(_tileMapStaging, 0x7F, gbTileMapWidth * 2);
+    
+    x = 0;
+    y = 0;
+    for(index = 0; index < 80; index++) {
+        metatileIndex = _mapMetatiles[index];
+        attributesIndex = (x + 2) + (y + 2) * gameMapAttributesWidth;
         
-        metamapTile = metamapTileAt(metamapX, metamapY);
+        mapAttributes[attributesIndex] = _metatileAttributes[metatileIndex];
         
-        backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
-        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
-        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        _tileMapStaging[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][0];
+        _tileMapStaging[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][1];
+        _tileMapStaging[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][2];
+        _tileMapStaging[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][3];
         
-        spritesClear();
-        
-        memoryCopyBanked(gbTileMemory, heroTiles, heroTilesLength, heroTilesBank);
-        memoryCopyBanked(gbTileMemory + 256 * 16, castleTiles, castleTilesLength, castleTilesBank);
-        
-        memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
-        memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
-        memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
-        
-        memorySet(gbTileMap0, 0x7F, gbTileMapWidth * 2);
-        
-        x = 0;
-        y = 0;
-        for(index = 0; index < 80; index++) {
-            metatileIndex = _mapMetatiles[index];
-            attributesIndex = (x + 2) + (y + 2) * gameMapAttributesWidth;
-            
-            mapAttributes[attributesIndex] = _metatileAttributes[metatileIndex];
-            
-            gbTileMap0[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][0];
-            gbTileMap0[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][1];
-            gbTileMap0[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][2];
-            gbTileMap0[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][3];
-            
-            x++;
-            if(x == 10) {
-                x = 0;
-                y++;
-            }
+        x++;
+        if(x == 10) {
+            x = 0;
+            y++;
         }
-    } gbLCDEnable();
+    }
     
     heroSpawn();
 }
@@ -93,18 +111,57 @@ void gameSuspend() {
 }
 
 void gameUpdate() {
+    backgroundPalette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    object0Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    object1Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+    
     if(shouldTransitionToNewMap) {
         gameWake();
         shouldTransitionToNewMap = false;
-    } else {
+    } else if(_gameLoadingStage == gameLoadingStageGameplay) {
+        backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
+        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        
         heroUpdate();
     }
 }
 
 void gameUpdateGraphics() {
-    // gbLogUInt8(gbLCDYCoordinateRegister);
-    // memoryCopy64Banked(gbTileMemory + 256 * 16, castleTiles, castleTilesBank);
-    // gbLogUInt8(gbLCDYCoordinateRegister);
+    switch(_gameLoadingStage) {
+    case gameLoadingStageGameplay:
+        break;
+    case gameLoadingStageCopyingHero:
+        memoryCopy64Banked(gbTileMemory + _gameLoadingOffset, heroTiles + _gameLoadingOffset, heroTilesBank);
+        _gameLoadingOffset += 64;
+        if(_gameLoadingOffset >= heroTilesLength) {
+            _gameLoadingOffset = 0;
+            if(_gameLoadedTiles != castleTiles) {
+                _gameLoadedTiles = castleTiles;
+                _gameLoadingStage = gameLoadingStageCopyingTiles;
+            } else {
+                _gameLoadingStage = gameLoadingStageWritingBG;
+            }
+        }
+        break;
+    case gameLoadingStageCopyingTiles:
+        memoryCopy64Banked(gbTileMemory + 256 * 16 + _gameLoadingOffset, castleTiles + _gameLoadingOffset, castleTilesBank);
+        _gameLoadingOffset += 64;
+        if(_gameLoadingOffset >= castleTilesLength) {
+            _gameLoadingOffset = 0;
+            _gameLoadingStage = gameLoadingStageWritingBG;
+        }
+        break;
+    case gameLoadingStageWritingBG:
+        memoryCopy64(gbTileMap0 + _gameLoadingOffset, _tileMapStaging + _gameLoadingOffset);
+        _gameLoadingOffset += 64;
+        if(_gameLoadingOffset >= gameTileMapStagingLength) {
+            _gameLoadingOffset = 0;
+            _gameLoadingStage = gameLoadingStageGameplay;
+            spritesShouldSuppressOAMTransfer = false;
+        }
+        break;
+    }
 }
 
 GBUInt8 gameAttributesAt(GBUInt8 x, GBUInt8 y) {
