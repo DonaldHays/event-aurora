@@ -85,6 +85,7 @@ void modulesCurrentSet(Module * module) {
         }
     } gbInterruptsEnable();
     
+    spritesShouldSuppressOAMTransfer = false;
     spritesClear();
     
     banksROMSet(module->romBank);

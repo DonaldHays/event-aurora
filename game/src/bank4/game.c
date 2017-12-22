@@ -45,6 +45,8 @@ void gameWake() {
     MetamapTile const * metamapTile;
     
     gbLCDDisable(); {
+        // If I disable the sprite OAM copy in main, I think I can get away with copying 64 bytes per vblank.
+        
         metamapTile = metamapTileAt(metamapX, metamapY);
         
         backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
@@ -54,8 +56,8 @@ void gameWake() {
         spritesClear();
         
         memoryCopyBanked(gbTileMemory, heroTiles, heroTilesLength, heroTilesBank);
-        
         memoryCopyBanked(gbTileMemory + 256 * 16, castleTiles, castleTilesLength, castleTilesBank);
+        
         memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
         memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
         memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
@@ -81,9 +83,9 @@ void gameWake() {
                 y++;
             }
         }
-        
-        heroSpawn();
     } gbLCDEnable();
+    
+    heroSpawn();
 }
 
 void gameSuspend() {
@@ -100,6 +102,8 @@ void gameUpdate() {
 }
 
 void gameUpdateGraphics() {
+    // gbLogUInt8(gbLCDYCoordinateRegister);
+    // memoryCopy64Banked(gbTileMemory + 256 * 16, castleTiles, castleTilesBank);
     // gbLogUInt8(gbLCDYCoordinateRegister);
 }
 

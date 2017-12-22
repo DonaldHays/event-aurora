@@ -41,6 +41,11 @@ typedef struct {
 
 extern volatile SpriteAttributes * spriteAttributes;
 
+/// Controls whether or not the OAM DMA should activate when calling
+/// `spritesWriteToOAM`. Useful during loading to free up a few cycles during
+/// vblank. Reset to `false` every time the module changes.
+extern GBBool spritesShouldSuppressOAMTransfer;
+
 void spritesInit();
 void spritesClear();
 void spritesWriteToOAM();

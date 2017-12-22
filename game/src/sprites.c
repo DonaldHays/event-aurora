@@ -7,12 +7,14 @@
 // ===
 
 volatile SpriteAttributes * spriteAttributes;
+GBBool spritesShouldSuppressOAMTransfer;
 
 // ===
 // Public API
 // ===
 void spritesInit() {
     spriteAttributes = (SpriteAttributes *)gbShadowOAMMemory;
+    spritesShouldSuppressOAMTransfer = false;
     
     spritesClear();
 }
@@ -22,6 +24,10 @@ void spritesClear() {
 }
 
 void spritesWriteToOAM() {
+    if(spritesShouldSuppressOAMTransfer) {
+        return;
+    }
+    
     __asm
     call #0xFF80
     __endasm;
