@@ -25,6 +25,9 @@ typedef enum {
 // Private Defines
 // ===
 #define gameTileMapStagingLength (gbTileMapWidth * 18)
+#define gameFadeStageIn 0x04
+#define gameFadeStageOut 0x08
+#define gameFadeStageMask 0x03
 
 // ===
 // Private Variables
@@ -37,6 +40,7 @@ GBUInt8 const * _gameLoadedTiles;
 
 GameLoadingStage _gameLoadingStage;
 GBUInt16 _gameLoadingOffset;
+GBUInt8 _gameFade;
 
 // ===
 // Public Variables
@@ -56,6 +60,7 @@ void gameInit() {
     heroSpawnY = 64;
     heroSpawnFaceLeft = false;
     shouldTransitionToNewMap = false;
+    _gameFade = 0;
     _gameLoadedTiles = null;
     _gameLoadingStage = gameLoadingStageCopyingHero;
     _gameLoadingOffset = 0;
@@ -128,6 +133,8 @@ void gameWake() {
     }
     
     heroSpawn();
+    
+    _gameFade = gameFadeStageIn;
 }
 
 void gameSuspend() {
@@ -143,9 +150,28 @@ void gameUpdate() {
         gameWake();
         shouldTransitionToNewMap = false;
     } else if(_gameLoadingStage == gameLoadingStageGameplay) {
-        backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
-        object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
-        object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        if(_gameFade & gameFadeStageIn) {
+            switch(_gameFade & gameFadeStageMask) {
+            case 0:
+                backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                break;
+            case 1:
+                backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                break;
+            }
+            _gameFade++;
+            if((_gameFade & gameFadeStageMask) == 2) {
+                _gameFade = 0;
+            }
+        } else {
+            backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
+            object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+            object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        }
         
         heroUpdate();
     }
@@ -183,6 +209,7 @@ void gameUpdateGraphics() {
             _gameLoadingOffset = 0;
             _gameLoadingStage = gameLoadingStageGameplay;
             spritesShouldSuppressOAMTransfer = false;
+            _gameFade = gameFadeStageIn;
         }
         break;
     }
