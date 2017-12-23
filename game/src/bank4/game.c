@@ -5,6 +5,7 @@
 #include "../memory.h"
 #include "../palette.h"
 #include "../sprites.h"
+#include "../audio.h"
 #include "metamap.h"
 #include "hero.h"
 
@@ -63,10 +64,13 @@ void gameInit() {
 }
 
 void gameWake() {
+    GBUInt8 lcdYTrackerOld, lcdYTrackerNew;
     GBUInt8 x, y, index;
     GBUInt8 metatileIndex;
     GBUInt8 attributesIndex;
     MetamapTile const * metamapTile;
+    
+    lcdYTrackerOld = gbLCDYCoordinateRegister;
     
     metamapTile = metamapTileAt(metamapX, metamapY);
     
@@ -76,12 +80,26 @@ void gameWake() {
     memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
     memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
     
+    lcdYTrackerNew = gbLCDYCoordinateRegister;
+    if(lcdYTrackerNew < lcdYTrackerOld) {
+        gbLogUInt8(lcdYTrackerNew);
+        gbLogUInt8(lcdYTrackerOld);
+        audioUpdate();
+    }
+    lcdYTrackerOld = lcdYTrackerNew;
+    
     _gameLoadingStage = gameLoadingStageCopyingHero;
     _gameLoadingOffset = 0;
     
     spritesShouldSuppressOAMTransfer = true;
     
     memorySet(_tileMapStaging, 0x7F, gbTileMapWidth * 2);
+    
+    lcdYTrackerNew = gbLCDYCoordinateRegister;
+    if(lcdYTrackerNew < lcdYTrackerOld) {
+        audioUpdate();
+    }
+    lcdYTrackerOld = lcdYTrackerNew;
     
     x = 0;
     y = 0;
@@ -100,6 +118,12 @@ void gameWake() {
         if(x == 10) {
             x = 0;
             y++;
+            
+            lcdYTrackerNew = gbLCDYCoordinateRegister;
+            if(lcdYTrackerNew < lcdYTrackerOld) {
+                audioUpdate();
+            }
+            lcdYTrackerOld = lcdYTrackerNew;
         }
     }
     
