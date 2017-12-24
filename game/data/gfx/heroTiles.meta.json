@@ -25,6 +25,70 @@
         "bl" : {"x" : 4, "y" : 1},
         "br" : {"x" : 5, "y" : 1}
       }
+    },
+    "run1" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 6, "y" : 1},
+        "br" : {"x" : 7, "y" : 1}
+      }
+    },
+    "run2" : {
+      "indices" : {
+        "tl" : {"x" : 0, "y" : 0},
+        "tr" : {"x" : 1, "y" : 0},
+        "bl" : {"x" : 8, "y" : 0},
+        "br" : {"x" : 9, "y" : 0}
+      }
+    },
+    "run3" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 8, "y" : 1},
+        "br" : {"x" : 9, "y" : 1}
+      }
+    },
+    "run4" : {
+      "indices" : {
+        "tl" : {"x" : 6, "y" : 0},
+        "tr" : {"x" : 7, "y" : 0},
+        "bl" : {"x" : 10, "y" : 0},
+        "br" : {"x" : 11, "y" : 0}
+      }
+    },
+    "run5" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 10, "y" : 1},
+        "br" : {"x" : 11, "y" : 1}
+      }
+    },
+    "run6" : {
+      "indices" : {
+        "tl" : {"x" : 0, "y" : 0},
+        "tr" : {"x" : 1, "y" : 0},
+        "bl" : {"x" : 12, "y" : 0},
+        "br" : {"x" : 13, "y" : 0}
+      }
+    },
+    "run7" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 12, "y" : 1},
+        "br" : {"x" : 13, "y" : 1}
+      }
+    },
+    "run8" : {
+      "indices" : {
+        "tl" : {"x" : 6, "y" : 0},
+        "tr" : {"x" : 7, "y" : 0},
+        "bl" : {"x" : 14, "y" : 0},
+        "br" : {"x" : 14, "y" : 1}
+      }
     }
   },
   "animations" : {
@@ -46,6 +110,43 @@
         {
           "frame" : "idle2",
           "duration" : 9
+        }
+      ]
+    },
+    "run" : {
+      "next" : "run",
+      "frames" : [
+        {
+          "frame" : "run1",
+          "duration" : 5
+        },
+        {
+          "frame" : "run2",
+          "duration" : 5
+        },
+        {
+          "frame" : "run3",
+          "duration" : 5
+        },
+        {
+          "frame" : "run4",
+          "duration" : 5
+        },
+        {
+          "frame" : "run5",
+          "duration" : 5
+        },
+        {
+          "frame" : "run6",
+          "duration" : 5
+        },
+        {
+          "frame" : "run7",
+          "duration" : 5
+        },
+        {
+          "frame" : "run8",
+          "duration" : 5
         }
       ]
     }

@@ -250,11 +250,19 @@ void _heroUpdateStandingState() {
     if(gbJoypadState & gbJoypadRight) {
         _heroIsFacingLeft = false;
         _heroX += 16;
-    }
-    
-    if(gbJoypadState & gbJoypadLeft) {
+        
+        if(_heroAnimationState.animation != &heroTilesAnimation_run) {
+            spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_run, heroTilesBank);
+        }
+    } else if(gbJoypadState & gbJoypadLeft) {
         _heroIsFacingLeft = true;
         _heroX -= 16;
+        
+        if(_heroAnimationState.animation != &heroTilesAnimation_run) {
+            spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_run, heroTilesBank);
+        }
+    } else if(_heroAnimationState.animation != &heroTilesAnimation_idle) {
+        spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_idle, heroTilesBank);
     }
     
     _heroMapEdgeBonk();
