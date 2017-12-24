@@ -28,6 +28,7 @@ typedef enum {
 #define gameFadeStageIn 0x04
 #define gameFadeStageOut 0x08
 #define gameFadeStageMask 0x03
+#define gameFadeStageTimerDuration 2
 
 // ===
 // Private Variables
@@ -41,6 +42,7 @@ GBUInt8 const * _gameLoadedTiles;
 GameLoadingStage _gameLoadingStage;
 GBUInt16 _gameLoadingOffset;
 GBUInt8 _gameFade;
+GBUInt8 _gameFadeStageTimer;
 
 // ===
 // Public Variables
@@ -61,6 +63,7 @@ void gameInit() {
     heroSpawnFaceLeft = false;
     shouldTransitionToNewMap = false;
     _gameFade = 0;
+    _gameFadeStageTimer = gameFadeStageTimerDuration;
     _gameLoadedTiles = null;
     _gameLoadingStage = gameLoadingStageCopyingHero;
     _gameLoadingOffset = 0;
@@ -135,6 +138,7 @@ void gameWake() {
     heroSpawn();
     
     _gameFade = gameFadeStageIn;
+    _gameFadeStageTimer = gameFadeStageTimerDuration;
 }
 
 void gameSuspend() {
@@ -163,9 +167,14 @@ void gameUpdate() {
                 object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
                 break;
             }
-            _gameFade++;
-            if((_gameFade & gameFadeStageMask) == 2) {
-                _gameFade = 0;
+            
+            _gameFadeStageTimer--;
+            if(_gameFadeStageTimer == 0) {
+                _gameFadeStageTimer = gameFadeStageTimerDuration;
+                _gameFade++;
+                if((_gameFade & gameFadeStageMask) == 2) {
+                    _gameFade = 0;
+                }
             }
         } else {
             backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
