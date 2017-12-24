@@ -38,7 +38,7 @@ GBUInt8 heroSpawnFaceLeft;
 // ===
 void _heroJump() {
     _heroState = heroStateJumping;
-    _heroVelocityY = -48;
+    _heroVelocityY = -50;
     _heroIsRisingSlowly = true;
     _heroHasReleasedA = false;
 }
