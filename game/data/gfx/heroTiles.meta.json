@@ -89,6 +89,30 @@
         "bl" : {"x" : 14, "y" : 0},
         "br" : {"x" : 14, "y" : 1}
       }
+    },
+    "jump1" : {
+      "indices" : {
+        "tl" : {"x" : 6, "y" : 0},
+        "tr" : {"x" : 7, "y" : 0},
+        "bl" : {"x" : 0, "y" : 2},
+        "br" : {"x" : 7, "y" : 1}
+      }
+    },
+    "jump2" : {
+      "indices" : {
+        "tl" : {"x" : 4, "y" : 0},
+        "tr" : {"x" : 5, "y" : 0},
+        "bl" : {"x" : 1, "y" : 2},
+        "br" : {"x" : 2, "y" : 2}
+      }
+    },
+    "jump3" : {
+      "indices" : {
+        "tl" : {"x" : 2, "y" : 0},
+        "tr" : {"x" : 3, "y" : 0},
+        "bl" : {"x" : 8, "y" : 1},
+        "br" : {"x" : 9, "y" : 1}
+      }
     }
   },
   "animations" : {
@@ -147,6 +171,28 @@
         {
           "frame" : "run8",
           "duration" : 5
+        }
+      ]
+    },
+    "jump" : {
+      "next" : "jumpContinue",
+      "frames" : [
+        {
+          "frame" : "jump1",
+          "duration" : 7
+        },
+        {
+          "frame" : "jump2",
+          "duration" : 7
+        }
+      ]
+    },
+    "jumpContinue" : {
+      "next" : "jumpContinue",
+      "frames" : [
+        {
+          "frame" : "jump3",
+          "duration" : 7
         }
       ]
     }

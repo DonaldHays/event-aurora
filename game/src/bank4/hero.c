@@ -41,6 +41,8 @@ void _heroJump() {
     _heroVelocityY = -50;
     _heroIsRisingSlowly = true;
     _heroHasReleasedA = false;
+    
+    spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_jump, heroTilesBank);
 }
 
 void _heroMapEdgeBonk() {
@@ -118,6 +120,7 @@ void _heroFallCheck() {
     if(hasFootStanding == false) {
         _heroVelocityY = 0;
         _heroState = heroStateJumping;
+        spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_jump, heroTilesBank);
     }
 }
 
