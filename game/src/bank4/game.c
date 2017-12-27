@@ -28,7 +28,7 @@ typedef enum {
 #define gameFadeStageIn 0x04
 #define gameFadeStageOut 0x08
 #define gameFadeStageMask 0x03
-#define gameFadeStageTimerDuration 2
+#define gameFadeStageTimerDuration 1
 
 // ===
 // Private Variables
@@ -150,21 +150,38 @@ void gameUpdate() {
     object0Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
     object1Palette = gbPaletteMake(gbShadeWhite, gbShadeWhite, gbShadeWhite, gbShadeWhite);
     
-    if(shouldTransitionToNewMap) {
+    if(shouldTransitionToNewMap && _gameFade == (gameFadeStageOut | 0x02)) {
         gameWake();
         shouldTransitionToNewMap = false;
     } else if(_gameLoadingStage == gameLoadingStageGameplay) {
-        if(_gameFade & gameFadeStageIn) {
+        if(shouldTransitionToNewMap && _gameFade == 0) {
+            _gameFade = gameFadeStageOut;
+            _gameFadeStageTimer = gameFadeStageTimerDuration;
+        }
+        
+        if(_gameFade & (gameFadeStageIn | gameFadeStageOut)) {
             switch(_gameFade & gameFadeStageMask) {
             case 0:
-                backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
-                object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
-                object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                if(_gameFade & gameFadeStageIn) {
+                    backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                } else {
+                    backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                    object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                }
                 break;
             case 1:
-                backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
-                object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
-                object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                if(_gameFade & gameFadeStageIn) {
+                    backgroundPalette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                    object0Palette = gbPaletteMake(gbShadeDarkGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object1Palette = gbPaletteMake(gbShadeDarkGray, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
+                } else {
+                    backgroundPalette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object0Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                    object1Palette = gbPaletteMake(gbShadeLightGray, gbShadeWhite, gbShadeWhite, gbShadeWhite);
+                }
                 break;
             }
             
@@ -172,7 +189,7 @@ void gameUpdate() {
             if(_gameFadeStageTimer == 0) {
                 _gameFadeStageTimer = gameFadeStageTimerDuration;
                 _gameFade++;
-                if((_gameFade & gameFadeStageMask) == 2) {
+                if((_gameFade & gameFadeStageMask) == 2 && (_gameFade & gameFadeStageOut) == 0) {
                     _gameFade = 0;
                 }
             }
@@ -180,6 +197,10 @@ void gameUpdate() {
             backgroundPalette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeLightGray, gbShadeWhite);
             object0Palette = gbPaletteMake(gbShadeBlack, gbShadeLightGray, gbShadeWhite, gbShadeWhite);
             object1Palette = gbPaletteMake(gbShadeBlack, gbShadeDarkGray, gbShadeWhite, gbShadeWhite);
+        }
+        
+        if(_gameFade & gameFadeStageOut) {
+            return;
         }
         
         heroUpdate();
