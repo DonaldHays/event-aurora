@@ -1,6 +1,7 @@
 {
   "bank" : 1,
   "size" : "2x2",
+  "count" : 33,
   "frames" : {
     "idle1" : {
       "indices" : {
