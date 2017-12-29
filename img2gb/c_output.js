@@ -24,7 +24,11 @@ function processHeader(filePath, bytes, options) {
   
   if(options["frames"] !== undefined) {
     output.push(`/** Frame definitions. */`);
-    output.push(`extern const SpriteFrame2x2 ${options["name"]}Frames[];`);
+    if(options["size"] == "2x2") {
+      output.push(`extern const SpriteFrame2x2 ${options["name"]}Frames[];`);
+    } else {
+      output.push(`extern const GBUInt8 ${options["name"]}Frames[];`);
+    }
     output.push(``);
   }
   
@@ -72,13 +76,22 @@ function processImplementation(filePath, bytes, options) {
   }
   
   if(options["frames"] !== undefined) {
-    output.push(`const SpriteFrame2x2 ${options["name"]}Frames[] = {`);
-    options["frames"].forEach((frame, index) => {
-      const bytes = [frame["tl"], frame["tr"], frame["bl"], frame["br"]];
-      output.push(`  { ${bytes.map((byte) => {return "0x" + formatter.toHex(byte)}).join(", ")} }${index == options["frames"].length - 1 ? "" : ","}`);
-    });
-    output.push(`};`)
-    output.push(``);
+    if(options["size"] == "2x2") {
+      output.push(`const SpriteFrame2x2 ${options["name"]}Frames[] = {`);
+      options["frames"].forEach((frame, index) => {
+        const bytes = [frame["tl"], frame["tr"], frame["bl"], frame["br"]];
+        output.push(`  { ${bytes.map((byte) => {return "0x" + formatter.toHex(byte)}).join(", ")} }${index == options["frames"].length - 1 ? "" : ","}`);
+      });
+      output.push(`};`)
+      output.push(``);
+    } else {
+      output.push(`const GBUInt8 ${options["name"]}Frames[] = {`);
+      options["frames"].forEach((frame, index) => {
+        output.push(`  0x${formatter.toHex(frame["index"])}${index == options["frames"].length - 1 ? "" : ","}`);
+      });
+      output.push(`};`)
+      output.push(``);
+    }
   }
   
   if(options["animations"] !== undefined) {

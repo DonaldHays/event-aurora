@@ -1,0 +1,33 @@
+{
+  "bank" : 1,
+  "size" : "1x1",
+  "frames" : {
+    "smoke1" : {
+      "index" : { "x" : 0, "y" : 0 }
+    },
+    "smoke2" : {
+      "index" : { "x" : 1, "y" : 0 }
+    },
+    "smoke3" : {
+      "index" : { "x" : 2, "y" : 0 }
+    }
+  },
+  "animations" : {
+    "smoke" : {
+      "frames" : [
+        {
+          "frame" : "smoke1",
+          "duration" : 8
+        },
+        {
+          "frame" : "smoke2",
+          "duration" : 8
+        },
+        {
+          "frame" : "smoke3",
+          "duration" : 8
+        }
+      ]
+    }
+  }
+}

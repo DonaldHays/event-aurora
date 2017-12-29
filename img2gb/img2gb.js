@@ -55,12 +55,18 @@ if(fs.existsSync(metaFilePath)) {
       if (meta["frames"].hasOwnProperty(name)) {
         const frame = meta["frames"][name];
         outputOptions["frameNames"].push(name);
-        outputOptions["frames"].push({
-          "tl" : frame["indices"]["tl"]["x"] + frame["indices"]["tl"]["y"] * imageData["width"],
-          "tr" : frame["indices"]["tr"]["x"] + frame["indices"]["tr"]["y"] * imageData["width"],
-          "bl" : frame["indices"]["bl"]["x"] + frame["indices"]["bl"]["y"] * imageData["width"],
-          "br" : frame["indices"]["br"]["x"] + frame["indices"]["br"]["y"] * imageData["width"]
-        });
+        if(meta["size"] == "2x2") {
+          outputOptions["frames"].push({
+            "tl" : frame["indices"]["tl"]["x"] + frame["indices"]["tl"]["y"] * imageData["width"],
+            "tr" : frame["indices"]["tr"]["x"] + frame["indices"]["tr"]["y"] * imageData["width"],
+            "bl" : frame["indices"]["bl"]["x"] + frame["indices"]["bl"]["y"] * imageData["width"],
+            "br" : frame["indices"]["br"]["x"] + frame["indices"]["br"]["y"] * imageData["width"]
+          });
+        } else {
+          outputOptions["frames"].push({
+            "index" : frame["index"]["x"] + frame["index"]["y"] * imageData["width"]
+          });
+        }
       }
     }
   }
