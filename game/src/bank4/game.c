@@ -1,6 +1,7 @@
 #include "game.h"
 #include "../data/gfx_castleTiles.h"
 #include "../data/gfx_heroTiles.h"
+#include "../data/gfx_particleTiles.h"
 #include "../data/meta_castleMetatiles.h"
 #include "../memory.h"
 #include "../palette.h"
@@ -18,7 +19,8 @@ typedef enum {
     gameLoadingStageGameplay,
     gameLoadingStageCopyingHero,
     gameLoadingStageCopyingTiles,
-    gameLoadingStageWritingBG
+    gameLoadingStageWritingBG,
+    gameLoadingStageCopyingParticles
 } GameLoadingStage;
 
 // ===
@@ -237,9 +239,17 @@ void gameUpdateGraphics() {
         _gameLoadingOffset += 64;
         if(_gameLoadingOffset >= gameTileMapStagingLength) {
             _gameLoadingOffset = 0;
+            _gameLoadingStage = gameLoadingStageCopyingParticles;
+            _gameFade = gameFadeStageIn;
+        }
+        break;
+    case gameLoadingStageCopyingParticles:
+        memoryCopy64Banked(gbTileMemory + 240 * 16 + _gameLoadingOffset, particleTiles + _gameLoadingOffset, particleTilesBank);
+        _gameLoadingOffset += 64;
+        if(_gameLoadingOffset >= particleTilesLength) {
+            _gameLoadingOffset = 0;
             _gameLoadingStage = gameLoadingStageGameplay;
             spritesShouldSuppressOAMTransfer = false;
-            _gameFade = gameFadeStageIn;
         }
         break;
     }
