@@ -9,6 +9,7 @@
 #include "../audio.h"
 #include "metamap.h"
 #include "hero.h"
+#include "particles.h"
 
 #pragma bank 4
 
@@ -137,6 +138,7 @@ void gameWake() {
         }
     }
     
+    particlesReset();
     heroSpawn();
     
     _gameFade = gameFadeStageIn;
@@ -205,6 +207,7 @@ void gameUpdate() {
             return;
         }
         
+        particlesUpdate();
         heroUpdate();
     }
 }

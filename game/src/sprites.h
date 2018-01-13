@@ -37,7 +37,7 @@ typedef struct {
     GBUInt8 bank;
 } SpriteAnimationState;
 
-#define spriteAttributesMake(flipX, palette) (((flipX) << 5) | ((palette) << 4))
+#define spriteAttributesMake(flipX, flipY, palette) (((flipX) << 5) | ((flipY) << 6) | ((palette) << 4))
 
 extern volatile SpriteAttributes * spriteAttributes;
 

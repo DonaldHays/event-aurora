@@ -1,6 +1,7 @@
 #include "hero.h"
 #include "../sprites.h"
 #include "game.h"
+#include "particles.h"
 #include "metamap.h"
 #include "../data/gfx_heroTiles.h"
 
@@ -179,6 +180,11 @@ void _heroStandCheck() {
             _heroState = heroStateStanding;
         }
     }
+    
+    if(_heroState == heroStateStanding && _heroVelocityY > 65) {
+        particlesSpawnSmoke((_heroX >> 4) - 24, (_heroY >> 4) + 12, -1);
+        particlesSpawnSmoke((_heroX >> 4) - 16, (_heroY >> 4) + 12, 1);
+    }
 }
 
 void _heroWallJumpCheck() {
@@ -204,6 +210,12 @@ void _heroWallJumpCheck() {
     attributes = gameAttributesAt(sensorX, sensorY);
     if(attributes & 0x01) {
         _heroJump();
+        
+        if(gbJoypadState & gbJoypadRight) {
+            particlesSpawnSmoke((_heroX >> 4) - 24, (_heroY >> 4) + 12, 1);
+        } else {
+            particlesSpawnSmoke((_heroX >> 4) - 16, (_heroY >> 4) + 12, -1);
+        }
     }
 }
 
@@ -319,7 +331,7 @@ void _heroUpdateSpriteAttributes() {
     heroY = (_heroY >> 4);
     
     spritesAnimationUpdate(&_heroAnimationState);
-    spritesWriteFrame2x2(&heroTilesFrames[spritesAnimationCurrentFrameIndex(&_heroAnimationState)], &spriteAttributes[0], 0, heroTilesBank, 0, heroX, heroY, spriteAttributesMake(_heroIsFacingLeft, 0));
+    spritesWriteFrame2x2(&heroTilesFrames[spritesAnimationCurrentFrameIndex(&_heroAnimationState)], &spriteAttributes[0], 0, heroTilesBank, 0, heroX, heroY, spriteAttributesMake(_heroIsFacingLeft, 0, 0));
 }
 
 // ===

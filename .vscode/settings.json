@@ -20,6 +20,7 @@
         "music_testsong.h": "c",
         "gfx_titletiles.h": "c",
         "mainmenu.h": "c",
-        "hero.h": "c"
+        "hero.h": "c",
+        "particles.h": "c"
     }
 }
