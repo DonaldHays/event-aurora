@@ -317,8 +317,9 @@ void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioCh
     }
 }
 
-void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, AudioLayer layer, GBUInt8 leftVolume, GBUInt8 rightVolume) {
+void _audioStatePlayNoiseNote(AudioChannelPlaybackState * channelState, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, AudioLayer layer, GBUInt8 leftVolume, GBUInt8 rightVolume) {
     GBUInt8 patternTableIndex;
+    GBUInt8 upperCommand;
     AudioPatternRow const * patternRow;
     NoiseInstrument const * instrument;
     
@@ -329,6 +330,7 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
     patternTableIndex = chain->rows[chainIndex].pattern;
     patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
     instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
+    upperCommand = (patternRow->command) >> 8;
     
     if(patternRow->note != 0) {
         if(_noiseOwnerLayer == layer) {
@@ -341,6 +343,11 @@ void _audioStatePlayNoiseNote(GBUInt8 chainIndex, GBUInt8 patternIndex, AudioCha
             gbNoiseTriggerRegister = 0x80;
         }
     }
+    
+    if((upperCommand & 0xF0) == 0xC0) {
+        // Terminate Phrase
+        channelState->patternIndex = 15;
+    }
 }
 
 void _audioStatePlayNotes() {
@@ -348,7 +355,7 @@ void _audioStatePlayNotes() {
     
     _audioStatePlaySquareNote(&state->square1State, &(state->composition->square1Chain), state->layer, &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
     _audioStatePlaySquareNote(&state->square2State, &(state->composition->square2Chain), state->layer, &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
-    _audioStatePlayNoiseNote(state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), state->layer, 0x80, 0x08);
+    _audioStatePlayNoiseNote(&state->noiseState, state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), state->layer, 0x80, 0x08);
 }
 
 void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, AudioChain const * chain) {

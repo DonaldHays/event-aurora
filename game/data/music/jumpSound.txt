@@ -18,7 +18,7 @@ BA 2
 # F  - Flags. L, R
 
 #  Name     L IV VD VA CS W DC  F
-NI Noise1  00 06  0  6 03 0  2 LR
+NI Noise1  00 08  0  6 03 0  2 LR
 
 # ===
 # Patterns
@@ -32,8 +32,8 @@ NI Noise1  00 06  0  6 03 0  2 LR
 
 PA Sound
   C3 Noise1 -
-   - - -
    - - X
+   - - -
    - - -
    - - -
    - - -
