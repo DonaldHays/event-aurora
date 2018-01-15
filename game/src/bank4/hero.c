@@ -190,9 +190,6 @@ void _heroStandCheck() {
     if(_heroState == heroStateStanding) {
         if(_heroVelocityY > 50) {
             audioPlayComposition(&jumpLandSound, jumpLandSoundBank, audioLayerSound, 0);
-        }
-        
-        if(_heroVelocityY > 65) {
             particlesSpawnSmoke((_heroX >> 4) - 24, (_heroY >> 4) + 12, -1);
             particlesSpawnSmoke((_heroX >> 4) - 16, (_heroY >> 4) + 12, 1);
         }
