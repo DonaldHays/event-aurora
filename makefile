@@ -38,6 +38,8 @@ BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 BANK2_SONGS = \
 	game/data/music/testSong.txt \
 	game/data/music/titleSong.txt \
+	game/data/music/jumpSound.txt \
+	game/data/music/jumpLandSound.txt \
 	game/data/music/testBoing.txt
 BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
 

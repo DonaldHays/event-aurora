@@ -4,6 +4,8 @@
 #include "particles.h"
 #include "metamap.h"
 #include "../data/gfx_heroTiles.h"
+#include "../data/music_jumpSound.h"
+#include "../data/music_jumpLandSound.h"
 
 #pragma bank 4
 
@@ -44,6 +46,10 @@ void _heroJump() {
     _heroHasReleasedA = false;
     
     spritesBeginAnimation(&_heroAnimationState, &heroTilesAnimation_jump, heroTilesBank);
+    
+    if(_heroY < ((32 + 104) * 16)) {
+        audioPlayComposition(&jumpSound, jumpSoundBank, audioLayerSound, 0);
+    }
 }
 
 void _heroMapEdgeBonk() {
@@ -181,9 +187,15 @@ void _heroStandCheck() {
         }
     }
     
-    if(_heroState == heroStateStanding && _heroVelocityY > 65) {
-        particlesSpawnSmoke((_heroX >> 4) - 24, (_heroY >> 4) + 12, -1);
-        particlesSpawnSmoke((_heroX >> 4) - 16, (_heroY >> 4) + 12, 1);
+    if(_heroState == heroStateStanding) {
+        if(_heroVelocityY > 50) {
+            audioPlayComposition(&jumpLandSound, jumpLandSoundBank, audioLayerSound, 0);
+        }
+        
+        if(_heroVelocityY > 65) {
+            particlesSpawnSmoke((_heroX >> 4) - 24, (_heroY >> 4) + 12, -1);
+            particlesSpawnSmoke((_heroX >> 4) - 16, (_heroY >> 4) + 12, 1);
+        }
     }
 }
 

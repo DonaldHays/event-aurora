@@ -1,0 +1,57 @@
+# Initial Tempo - Ticks per beat
+IT 8
+
+# Bank - The ROM bank the song will be stored in
+BA 2
+
+# ===
+# Noise Instruments
+# ===
+
+# L  - Length, 0-63. Length = (L / 63) * 0.25 seconds
+# IV - Initial Volume, 0-15
+# VD - Volume Direction, 0-1. 1 to increase
+# VA - Volume Amount, 0-7. Larger values for bigger jumps
+# CS - Clock Shift, 0-15. Larger values are "dirtier". Too large breaks it
+# W  - Width mode, 0-1. 0 for noise, 1 for buzz
+# DC - Divisor code, 0-7. Larger values yield higher frequencies
+# F  - Flags. L, R
+
+#  Name     L IV VD VA CS W DC  F
+NI Noise1  00 08  0  6 03 0  0 LR
+
+# ===
+# Patterns
+# ===
+
+# Commands:
+# V T S, Vibratto, oscillation takes 2 * T frames, with S steps each frame.
+# A X Y, Arpeggio, second note is X steps from first note, third is Y from
+#        second.
+# X, Terminate Phrase
+
+PA Sound
+  C3 Noise1 -
+   - - -
+   - - X
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+
+# ===
+# Chains
+# ===
+
+CH Noise NR
+  Sound
+EC
