@@ -11,7 +11,7 @@ void textLoadFont(void * destination, GBBool shouldInvert) {
     memoryCopyBanked(destination, font, fontLength, fontBank);
     
     if(shouldInvert) {
-        for(index = 0; index < fontLength; index++) {
+        for(index = 0; index != fontLength; index++) {
             ((GBUInt8 *)destination)[index] ^= 0xFF;
         }
     }

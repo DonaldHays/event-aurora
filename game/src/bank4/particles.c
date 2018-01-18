@@ -23,6 +23,7 @@ typedef enum {
 } ParticleType;
 
 #define particlesCount 8
+#define particlesSpriteOAMStartIndex 36
 
 // ===
 // Private Variables
@@ -62,6 +63,7 @@ void particlesUpdate() {
     Particle * particle;
     GBUInt8 index;
     GBUInt8 * spriteAttributesPointer;
+    GBUInt8 particleAge;
     
     _particlesCycleCounter = (_particlesCycleCounter + 1) & 0x01;
     
@@ -73,32 +75,39 @@ void particlesUpdate() {
         }
         
         particle->age++;
+        particleAge = particle->age;
         
         if(particle->type == particleTypeSmoke) {
-            if(particle->age == 10) {
-                particle->tileIndex = 241;
-            } else if(particle->age == 17) {
-                particle->tileIndex = 242;
-            } else if(particle->age == 25) {
-                particle->isActive = false;
-                continue;
-            }
-            
-            if (((particle->age & 7) == 7)) {
+            if (((particleAge & 7) == 7)) {
                 particle->y -= 1;
             }
             
-            if(particle->age < 5 && (particle->age & 1)) {
-                particle->x += (GBInt8)particle->user0;
-            } else if (particle->age < 15 && ((particle->age & 3) == 3)) {
-                particle->x += (GBInt8)particle->user0;
+            if(particleAge < 5) {
+                if(particleAge & 1) {
+                    particle->x += (GBInt8)particle->user0;
+                }
+            } else if(particleAge < 15) {
+                if(particleAge == 10) {
+                    particle->tileIndex = 241;
+                }
+                
+                if((particleAge & 3) == 3) {
+                    particle->x += (GBInt8)particle->user0;
+                }
+            } else {
+                if(particleAge == 17) {
+                    particle->tileIndex = 242;
+                } else if(particleAge == 25) {
+                    particle->isActive = false;
+                    continue;
+                }
             }
         }
     }
     
     for(index = 0; index != (particlesCount / 2); index++) {
         particle = &_particles[index * 2 + _particlesCycleCounter];
-        spriteAttributesPointer = (GBUInt8 *)(&spriteAttributes[36 + index]);
+        spriteAttributesPointer = (GBUInt8 *)(&spriteAttributes[particlesSpriteOAMStartIndex + index]);
         
         if(particle->isActive == false) {
             *(spriteAttributesPointer++) = 0;

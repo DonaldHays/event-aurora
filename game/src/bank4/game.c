@@ -115,7 +115,7 @@ void gameWake() {
     
     x = 0;
     y = 0;
-    for(index = 0; index < 80; index++) {
+    for(index = 0; index != 80; index++) {
         metatileIndex = _mapMetatiles[index];
         attributesIndex = (x + 2) + (y + 2) * gameMapAttributesWidth;
         
