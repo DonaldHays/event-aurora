@@ -1,4 +1,5 @@
 #include "hero.h"
+#include "heroBullets.h"
 #include "../sprites.h"
 #include "game.h"
 #include "particles.h"
@@ -378,6 +379,14 @@ void heroUpdate() {
         break;
     default:
         gbFatalError("unrecognized state");
+    }
+    
+    if(gbJoypadPressedSinceLastUpdate & gbJoypadB) {
+        if(_heroIsFacingLeft) {
+            heroBulletsSpawn((_heroX >> 4) - 26, (_heroY >> 4) + 8, heroBulletsDirectionLeft);
+        } else {
+            heroBulletsSpawn((_heroX >> 4) - 14, (_heroY >> 4) + 8, heroBulletsDirectionRight);
+        }
     }
     
     _heroUpdateSpriteAttributes();

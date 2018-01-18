@@ -63,7 +63,8 @@ BANK4_SRCS = \
 	game/src/bank4/game.c \
 	game/src/bank4/hero.c \
 	game/src/bank4/metamap.c \
-	game/src/bank4/particles.c
+	game/src/bank4/particles.c \
+	game/src/bank4/heroBullets.c
 
 GAME_SRCS = $(HOME_SRCS) $(BANK1_SRCS) $(BANK2_SRCS) $(BANK3_SRCS) $(BANK4_SRCS)
 

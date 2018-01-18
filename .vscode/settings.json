@@ -21,6 +21,7 @@
         "gfx_titletiles.h": "c",
         "mainmenu.h": "c",
         "hero.h": "c",
-        "particles.h": "c"
+        "particles.h": "c",
+        "music_jumplandsound.h": "c"
     }
 }
