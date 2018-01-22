@@ -40,6 +40,7 @@ BANK2_SONGS = \
 	game/data/music/titleSong.txt \
 	game/data/music/jumpSound.txt \
 	game/data/music/jumpLandSound.txt \
+	game/data/music/bulletFireSound.txt \
 	game/data/music/testBoing.txt
 BANK2_SRCS = $(patsubst game/data/music/%.txt,game/src/data/music_%.c,$(BANK2_SONGS))
 
@@ -144,6 +145,7 @@ game/src/data/map_%.c: game/data/maps/%.json
 game/bin/EventAurora.gb: game/obj/game.ihx
 	$(ENSURE_DIRECTORY)
 	node ihx2gb --name EVENTAURORA --licensee DH --cartridge 3 --rom 2 --ram 1 game/obj/game.ihx game/bin/EventAurora.gb
+	@echo "Done!"
 
 game/obj/game.ihx: $(GAME_OBJS)
 	$(ENSURE_DIRECTORY)

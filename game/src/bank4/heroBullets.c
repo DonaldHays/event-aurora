@@ -2,7 +2,7 @@
 #include "../sprites.h"
 #include "game.h"
 #include "particles.h"
-#include "../data/music_jumpLandSound.h"
+#include "../data/music_bulletFireSound.h"
 
 #pragma bank 4
 
@@ -105,5 +105,5 @@ void heroBulletsSpawn(GBUInt8 x, GBUInt8 y, HeroBulletsDirection direction) {
     _playerBullets[foundIndex].y = y;
     _playerBullets[foundIndex].flags = flags;
     
-    audioPlayComposition(&jumpLandSound, jumpLandSoundBank, audioLayerSound, 5);
+    audioPlayComposition(&bulletFireSound, bulletFireSoundBank, audioLayerSound, 5);
 }

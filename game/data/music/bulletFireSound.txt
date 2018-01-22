@@ -1,0 +1,58 @@
+# Initial Tempo - Ticks per beat
+IT 8
+
+# Bank - The ROM bank the song will be stored in
+BA 2
+
+# ===
+# Square Instruments
+# ===
+
+# SR - Sweep Rate, 0-7
+# SD - Sweep Direction, 0-1. 1 to increase
+# SA - Sweep Amount, 0-7. Larger values for bigger jumps
+# P  - Pattern, 0-3. 0 for 12.5%, 1 for 25%, 2 for 50%, 3 for 75%
+# L  - Length, 0-63. Length = (L / 63) * 0.25 seconds
+# IV - Initial Volume, 0-15
+# VD - Volume Direction, 0-1. 1 to increase
+# VA - Volume Amount, 0-7. Larger values for bigger jumps
+# F  - Flags. L, R, -.
+
+#  Name    SR SD SA P  L IV VD VA  F
+SI Square1  1  0  1 1 00 15  0  6 LR
+
+# ===
+# Patterns
+# ===
+
+# Commands:
+# V T S, Vibratto, oscillation takes 2 * T frames, with S steps each frame.
+# A X Y, Arpeggio, second note is X steps from first note, third is Y from
+#        second.
+# X, Terminate Phrase
+
+PA Sound
+  C5 Square1 -
+   - - X
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+   - - -
+
+# ===
+# Chains
+# ===
+
+CH Square1 NR
+  Sound
+EC
