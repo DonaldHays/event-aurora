@@ -1,0 +1,19 @@
+{ "columns":8,
+ "image":"objects.png",
+ "imageheight":128,
+ "imagewidth":128,
+ "margin":0,
+ "name":"objects",
+ "spacing":0,
+ "tilecount":64,
+ "tileheight":16,
+ "tiles":
+    {
+     "0":
+        {
+         "type":"heroSpawn"
+        }
+    },
+ "tilewidth":16,
+ "type":"tileset"
+}
