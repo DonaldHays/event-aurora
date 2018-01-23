@@ -11,12 +11,3 @@ volatile GBUInt8 _banksROMCurrent;
 void banksInit() {
     _banksROMCurrent = 0;
 }
-
-GBUInt8 banksROMGet() {
-    return _banksROMCurrent;
-}
-
-void banksROMSet(GBUInt8 bank) {
-    _banksROMCurrent = bank;
-    gbROMBankSet(bank);
-}

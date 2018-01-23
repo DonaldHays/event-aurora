@@ -3,8 +3,11 @@
 
 #include <gb/gb.h>
 
+extern volatile GBUInt8 _banksROMCurrent;
+
 void banksInit();
-GBUInt8 banksROMGet();
-void banksROMSet(GBUInt8 bank);
+
+#define banksROMGet() (_banksROMCurrent)
+#define banksROMSet(bank) { _banksROMCurrent = (bank); gbROMBankSet(bank); }
 
 #endif
