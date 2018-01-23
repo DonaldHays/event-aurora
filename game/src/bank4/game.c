@@ -94,8 +94,6 @@ void gameWake() {
     
     lcdYTrackerNew = gbLCDYCoordinateRegister;
     if(lcdYTrackerNew < lcdYTrackerOld) {
-        gbLogUInt8(lcdYTrackerNew);
-        gbLogUInt8(lcdYTrackerOld);
         audioUpdate();
     }
     lcdYTrackerOld = lcdYTrackerNew;

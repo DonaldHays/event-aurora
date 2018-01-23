@@ -1,5 +1,6 @@
 #include "audio.h"
 #include "banks.h"
+#include "memory.h"
 
 // ===
 // Private Defines
@@ -10,49 +11,27 @@
 // Private Types
 // ===
 
+/// An AudioHardwareChannelState manages the program-level view of one of the
+/// audio channels for the device. There is one instance of this struct per
+/// hardware channel, _not_ per program-level layer.
 typedef struct {
-    GBUInt8 audioChainRowIndex;
-    GBUInt8 repeatCount;
-} AudioRepeatStackFrame;
+    GBUInt8 padding;
+} AudioHardwareChannelState;
 
-typedef AudioRepeatStackFrame AudioRepeatStack[_audioRepeatStackCount];
-
+/// An AudioLayerChannelState represents the memory for a single channel of
+/// a layer.
 typedef struct {
-    GBUInt8 chainIndex;
-    GBUInt8 patternIndex;
-    GBUInt8 repeatStackIndex;
-    AudioRepeatStack repeatStack;
-    GBUInt8 *ownerLayer;
-} AudioChannelPlaybackState;
+    GBUInt8 padding;
+} AudioLayerChannelState;
 
+/// An AudioLayerState represents the memory for an audio layer.
 typedef struct {
-    AudioComposition const * composition;
     AudioLayer layer;
-    GBUInt8 romBank;
-    GBUInt8 priority;
-    GBUInt8 tempo;
-    GBUInt8 tempoTimer;
-    AudioChannelPlaybackState square1State;
-    AudioChannelPlaybackState square2State;
-    AudioChannelPlaybackState noiseState;
-} AudioPlaybackState;
-
-typedef struct {
-    /**
-     * 0x00 -> default
-     * 0x01 -> vibratoUp
-     * 0x02 -> vibratoDown
-     * 0x03 -> arpeggio
-     * 0x04 -> terminate
-     */
-    GBUInt8 mode;
-    GBUInt8 vibratoConfiguration;
-    GBUInt8 tickCounter;
-    GBUInt16 frequency;
-    GBUInt8 note;
-    GBUInt8 arpeggioStepsSecond;
-    GBUInt8 arpeggioStepsThird;
-} SquareFrameTickState;
+    AudioComposition const * composition;
+    AudioLayerChannelState square1;
+    AudioLayerChannelState square2;
+    AudioLayerChannelState noise;
+} AudioLayerState;
 
 // ===
 // Public Constant Data
@@ -139,385 +118,79 @@ const GBUInt16 audioNoteTable[72] = {
 // ===
 // Private Variables
 // ===
-AudioPlaybackState _soundPlaybackState;
-AudioPlaybackState _musicPlaybackState;
+AudioHardwareChannelState _square1State;
+AudioHardwareChannelState _square2State;
+AudioHardwareChannelState _noiseState;
 
-SquareFrameTickState _square1FrameTickState;
-SquareFrameTickState _square2FrameTickState;
+AudioLayerState _musicState;
+AudioLayerState _soundState;
 
-AudioPlaybackState * _updatingState;
-AudioComposition const * _updatingComposition;
-
-GBUInt8 _square1OwnerLayer;
-GBUInt8 _square2OwnerLayer;
-GBUInt8 _noiseOwnerLayer;
+AudioHardwareChannelState * _currentHardwareChannelState;
+AudioLayerChannelState * _currentLayerChannelState;
+AudioLayerState * _currentLayerState;
 
 // ===
 // Private API
 // ===
 
-void _releaseSquare1Owner() {
-    gbTone1VolumeRegister = 0x00;
-    
-    _square1OwnerLayer--;
-    if(_square1OwnerLayer == audioLayerMusic) {
-        if((_musicPlaybackState.composition == null) || (_musicPlaybackState.square1State.chainIndex == _musicPlaybackState.composition->square1Chain.numberOfRows)) {
-            _square1OwnerLayer--;
-        }
-    }
+/// Initializes the values of `_currentHardwareChannelState`.
+void _audioInitHardwareChannelState() {
+    _currentHardwareChannelState->padding = 0;
 }
 
-void _releaseSquare2Owner() {
-    gbTone2VolumeRegister = 0x00;
-    
-    _square2OwnerLayer--;
-    if(_square2OwnerLayer == audioLayerMusic) {
-        if((_musicPlaybackState.composition == null) || (_musicPlaybackState.square2State.chainIndex == _musicPlaybackState.composition->square2Chain.numberOfRows)) {
-            _square2OwnerLayer--;
-        }
-    }
+/// Initializes the values of `_currentLayerChannelState`.
+void _audioInitAudioLayerChannelState() {
+    _currentLayerChannelState->padding = 0;
 }
 
-void _releaseNoiseOwner() {
-    gbNoiseVolumeRegister = 0x00;
+/// Initializes the values of `_currentLayerState`.
+void _audioInitAudioLayerState() {
+    AudioLayerState * state = _currentLayerState;
     
-    _noiseOwnerLayer--;
-    if(_noiseOwnerLayer == audioLayerMusic) {
-        if((_musicPlaybackState.composition == null) || (_musicPlaybackState.noiseState.chainIndex == _musicPlaybackState.composition->noiseChain.numberOfRows)) {
-            _noiseOwnerLayer--;
-        }
-    }
-}
-
-void _audioInitPlaybackState(AudioPlaybackState * state) {
     state->composition = null;
-    state->priority = 0;
-    state->square1State.repeatStackIndex = 0;
-    state->square2State.repeatStackIndex = 0;
-    state->noiseState.repeatStackIndex = 0;
-    state->square1State.ownerLayer = &_square1OwnerLayer;
-    state->square2State.ownerLayer = &_square2OwnerLayer;
-    state->noiseState.ownerLayer = &_noiseOwnerLayer;
+    
+    // This function assumes square1, square2, and noise AudioLayerChannelState
+    // instances follow each other in AudioLayerState.
+    
+    _currentLayerChannelState = &(state->square1);
+    _audioInitAudioLayerChannelState();
+    
+    _currentLayerChannelState += sizeof(AudioLayerChannelState);
+    _audioInitAudioLayerChannelState();
+    
+    _currentLayerChannelState += sizeof(AudioLayerChannelState);
+    _audioInitAudioLayerChannelState();
 }
 
-void _audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioPlaybackState * state, GBUInt8 priority) {
-    GBUInt8 originalBank;
+/// Ticks _currentHardwareChannelState.
+void _audioHardwareChannelStateUpdate() {
     
-    if(composition == null) {
-        _audioInitPlaybackState(state);
-        if(_square1OwnerLayer == state->layer) {
-            _releaseSquare1Owner();
-        }
-        
-        if(_square2OwnerLayer == state->layer) {
-            _releaseSquare2Owner();
-        }
-        
-        if(_noiseOwnerLayer == state->layer) {
-            _releaseNoiseOwner();
-        }
-        
+}
+
+/// Ticks _currentLayerChannelState.
+void _audioLayerChannelStateUpdate() {
+    
+}
+
+/// Ticks _currentLayerState if it has a composition.
+void _audioLayerStateUpdate() {
+    AudioLayerState * state = _currentLayerState;
+    
+    if(state->composition == null) {
         return;
     }
     
-    if(state->composition != null && state->priority > priority) {
-        return;
-    }
+    // This function assumes square1, square2, and noise AudioLayerChannelState
+    // instances follow each other in AudioLayerState.
     
-    originalBank = banksROMGet();
-    banksROMSet(romBank); {
-        state->composition = composition;
-        state->romBank = romBank;
-        state->priority = priority;
-        state->tempo = composition->initialTempo;
-        state->tempoTimer = 0;
-        state->square1State.chainIndex = 0;
-        state->square1State.patternIndex = 0;
-        state->square1State.repeatStackIndex = 0;
-        state->square2State.chainIndex = 0;
-        state->square2State.patternIndex = 0;
-        state->square2State.repeatStackIndex = 0;
-        state->noiseState.chainIndex = 0;
-        state->noiseState.patternIndex = 0;
-        state->noiseState.repeatStackIndex = 0;
-        
-        if(_square1OwnerLayer <= state->layer && composition->square1Chain.numberOfRows > 0) {
-            _square1OwnerLayer = state->layer;
-            gbTone1VolumeRegister = 0x00;
-        }
-        
-        if(_square2OwnerLayer <= state->layer && composition->square2Chain.numberOfRows > 0) {
-            _square2OwnerLayer = state->layer;
-            gbTone2VolumeRegister = 0x00;
-        }
-        
-        if(_noiseOwnerLayer <= state->layer && composition->noiseChain.numberOfRows > 0) {
-            _noiseOwnerLayer = state->layer;
-            gbNoiseVolumeRegister = 0x00;
-        }
-    } banksROMSet(originalBank);
-}
-
-void _audioStatePlaySquareNote(AudioChannelPlaybackState * channelState, AudioChain const * chain, AudioLayer layer, GBUInt8 * registers, GBUInt8 leftVolume, GBUInt8 rightVolume, SquareFrameTickState * tickState) {
-    GBUInt8 patternTableIndex;
-    AudioPatternRow const * patternRow;
-    SquareInstrument const * instrument;
-    GBUInt16 note;
-    GBUInt8 upperCommand;
-    GBUInt8 lowerCommand;
-    GBUInt8 chainIndex;
-    GBUInt8 patternIndex;
+    _currentLayerChannelState = &(state->square1);
+    _audioLayerChannelStateUpdate();
     
-    chainIndex = channelState->chainIndex;
+    _currentLayerChannelState += sizeof(AudioLayerChannelState);
+    _audioLayerChannelStateUpdate();
     
-    if(chainIndex == chain->numberOfRows) {
-        return;
-    }
-    
-    patternIndex = channelState->patternIndex;
-    
-    patternTableIndex = chain->rows[chainIndex].pattern;
-    patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
-    note = audioNoteTable[patternRow->note];
-    instrument = &(_updatingComposition->squareInstruments[patternRow->instrument]);
-    upperCommand = (patternRow->command) >> 8;
-    lowerCommand = (patternRow->command) & 0xFF;
-    
-    if(patternRow->note != 0) {
-        if(*(channelState->ownerLayer) == layer) {
-            gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
-            gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
-            
-            registers[0] = instrument->sweep;
-            registers[1] = instrument->pattern;
-            registers[2] = instrument->volume;
-            registers[3] = note & 0xFF;
-            registers[4] = 0x80 | (note >> 8);
-        }
-        
-        tickState->mode = 0;
-        tickState->frequency = note;
-        tickState->note = patternRow->note;
-    }
-    
-    if((upperCommand & 0xF0) == 0xA0) {
-        // Vibratto
-        tickState->mode = 1;
-        tickState->vibratoConfiguration = lowerCommand;
-        tickState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
-    } else if((upperCommand & 0xF0) == 0xB0) {
-        // Arpeggio
-        tickState->mode = 3;
-        tickState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
-        tickState->arpeggioStepsThird = (lowerCommand & 0x0F);
-        tickState->tickCounter = 0;
-    } else if((upperCommand & 0xF0) == 0xC0) {
-        // Terminate Phrase
-        channelState->patternIndex = 15;
-    }
-}
-
-void _audioStatePlayNoiseNote(AudioChannelPlaybackState * channelState, GBUInt8 chainIndex, GBUInt8 patternIndex, AudioChain const * chain, AudioLayer layer, GBUInt8 leftVolume, GBUInt8 rightVolume) {
-    GBUInt8 patternTableIndex;
-    GBUInt8 upperCommand;
-    AudioPatternRow const * patternRow;
-    NoiseInstrument const * instrument;
-    
-    if(chainIndex == chain->numberOfRows) {
-        return;
-    }
-    
-    patternTableIndex = chain->rows[chainIndex].pattern;
-    patternRow = &(_updatingComposition->patterns[patternTableIndex][patternIndex]);
-    instrument = &(_updatingComposition->noiseInstruments[patternRow->instrument]);
-    upperCommand = (patternRow->command) >> 8;
-    
-    if(patternRow->note != 0) {
-        if(_noiseOwnerLayer == layer) {
-            gbAudioTerminalRegister = (instrument->flags & 0x02) ? gbAudioTerminalRegister | leftVolume : gbAudioTerminalRegister & ~leftVolume;
-            gbAudioTerminalRegister = (instrument->flags & 0x01) ? gbAudioTerminalRegister | rightVolume : gbAudioTerminalRegister & ~rightVolume;
-            
-            gbNoiseLengthRegister = instrument->length;
-            gbNoiseVolumeRegister = instrument->volume;
-            gbNoisePolynomialRegister = instrument->polynomial;
-            gbNoiseTriggerRegister = 0x80;
-        }
-    }
-    
-    if((upperCommand & 0xF0) == 0xC0) {
-        // Terminate Phrase
-        channelState->patternIndex = 15;
-    }
-}
-
-void _audioStatePlayNotes() {
-    AudioPlaybackState * state = _updatingState;
-    
-    _audioStatePlaySquareNote(&state->square1State, &(state->composition->square1Chain), state->layer, &gbTone1SweepRegister, 0x10, 0x01, &_square1FrameTickState);
-    _audioStatePlaySquareNote(&state->square2State, &(state->composition->square2Chain), state->layer, &gbTone2UnusedRegister, 0x20, 0x02, &_square2FrameTickState);
-    _audioStatePlayNoiseNote(&state->noiseState, state->noiseState.chainIndex, state->noiseState.patternIndex, &(state->composition->noiseChain), state->layer, 0x80, 0x08);
-}
-
-void _audioIncrementChannelState(AudioChannelPlaybackState * channelState, AudioChain const * chain) {
-    GBUInt8 repeatCommand;
-    GBUInt8 repeatCount;
-    GBUInt8 repeatIndex;
-    
-    if(channelState->chainIndex != chain->numberOfRows) {
-        channelState->patternIndex++;
-        if(channelState->patternIndex == 16) {
-            channelState->patternIndex = 0;
-            
-            repeatCommand = chain->rows[channelState->chainIndex].repeatCommand;
-            if(repeatCommand & 0x80) {
-                // We have a repeat command to evaluate.
-                repeatCount = (repeatCommand >> 4) & 0x03;
-                repeatIndex = repeatCommand & 0x0F;
-                
-                if(channelState->repeatStackIndex == 0 || channelState->repeatStack[channelState->repeatStackIndex - 1].audioChainRowIndex != channelState->chainIndex) {
-                    // Either the repeat stack is empty, or the top of the stack does not contain this row.
-                    
-                    // Make an entry in the stack.
-                    channelState->repeatStack[channelState->repeatStackIndex].audioChainRowIndex = channelState->chainIndex;
-                    channelState->repeatStack[channelState->repeatStackIndex].repeatCount = repeatCount;
-                    channelState->repeatStackIndex++;
-                    
-                    // Jump to the label.
-                    channelState->chainIndex = chain->labels[repeatIndex];
-                    
-                    // Sanity assertion.
-                    if(channelState->repeatStackIndex == _audioRepeatStackCount) {
-                        gbFatalError("repeat stack overflow");
-                    }
-                } else {
-                    // We are already the top of the stack.
-                    
-                    // Decrease the repeat count by 1.
-                    channelState->repeatStack[channelState->repeatStackIndex - 1].repeatCount--;
-                    
-                    if(channelState->repeatStack[channelState->repeatStackIndex - 1].repeatCount == 0) {
-                        // We have finished our final repeat, so move forward.
-                        channelState->chainIndex++;
-                        
-                        // Also pop the stack element
-                        channelState->repeatStackIndex--;
-                    } else {
-                        // We have another repeat to do, jump to the label.
-                        channelState->chainIndex = chain->labels[repeatIndex];
-                    }
-                }
-            } else {
-                // There is no repeat command, so just move forward
-                channelState->chainIndex++;
-            }
-        }
-    }
-    
-    if(channelState->chainIndex == chain->numberOfRows) {
-        // We have reached the end of the chain.
-        
-        if(chain->infiniteRepeat & 0x80) {
-            // We're repeating infinitely, find the label index.
-            repeatIndex = chain->infiniteRepeat & 0x0F;
-            
-            // Jump to the label.
-            channelState->chainIndex = chain->labels[repeatIndex];
-        } else {
-            if((channelState == (&_updatingState->square1State)) && (_updatingState->layer == _square1OwnerLayer)) {
-                _releaseSquare1Owner();
-            }
-            
-            if((channelState == (&_updatingState->square2State)) && (_updatingState->layer == _square2OwnerLayer)) {
-                _releaseSquare2Owner();
-            }
-            
-            if((channelState == (&_updatingState->noiseState)) && (_updatingState->layer == _noiseOwnerLayer)) {
-                _releaseNoiseOwner();
-            }
-        }
-    }
-}
-
-void _audioStateIncrement() {
-    AudioPlaybackState * state = _updatingState;
-    
-    state->tempoTimer = state->tempo;
-    
-    _audioIncrementChannelState(&state->square1State, &_updatingComposition->square1Chain);
-    _audioIncrementChannelState(&state->square2State, &_updatingComposition->square2Chain);
-    _audioIncrementChannelState(&state->noiseState, &_updatingComposition->noiseChain);
-    
-    if(state->square1State.chainIndex == _updatingComposition->square1Chain.numberOfRows && state->square2State.chainIndex == _updatingComposition->square2Chain.numberOfRows && state->noiseState.chainIndex == _updatingComposition->noiseChain.numberOfRows) {
-        state->composition = null;
-    }
-}
-
-void _audioUpdatePlaybackState() {
-    GBUInt8 originalBank;
-    
-    // If there's no composition, this state is idle.
-    if(_updatingComposition == null) {
-        return;
-    }
-    
-    // If we're between ticks, decrease tempo timer and return.
-    if(_updatingState->tempoTimer != 0) {
-        _updatingState->tempoTimer--;
-        return;
-    }
-    
-    originalBank = banksROMGet();
-    banksROMSet(_updatingState->romBank); {
-        _audioStatePlayNotes();
-        _audioStateIncrement();
-    } banksROMSet(originalBank);
-}
-
-void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequencyRegisters) {
-    GBUInt16 frequency;
-    
-    if(state->mode == 1) {
-        // Vibratto Increment
-        state->tickCounter--;
-        if(state->tickCounter == 0) {
-            state->tickCounter = state->vibratoConfiguration >> 4;
-            state->mode = 2;
-        } else {
-            state->frequency += state->vibratoConfiguration & 0x0F;
-            
-            frequencyRegisters[0] = state->frequency & 0xFF;
-            frequencyRegisters[1] = state->frequency >> 8;
-        }
-    } else if(state->mode == 2) {
-        // Vibratto Decrement
-        state->tickCounter--;
-        if(state->tickCounter == 0) {
-            state->tickCounter = state->vibratoConfiguration >> 4;
-            state->mode = 1;
-        } else {
-            state->frequency -= state->vibratoConfiguration & 0x0F;
-            
-            frequencyRegisters[0] = state->frequency & 0xFF;
-            frequencyRegisters[1] = state->frequency >> 8;
-        }
-    } else if(state->mode == 3) {
-        // Arpeggio
-        state->tickCounter++;
-        if(state->tickCounter == 3) {
-            state->tickCounter = 0;
-        }
-        
-        if((state->tickCounter) == 0) {
-            frequency = audioNoteTable[state->note];
-        } else if((state->tickCounter) == 1) {
-            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond];
-        } else {
-            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond + state->arpeggioStepsThird];
-        }
-        
-        frequencyRegisters[0] = frequency & 0xFF;
-        frequencyRegisters[1] = (frequency >> 8);
-    }
+    _currentLayerChannelState += sizeof(AudioLayerChannelState);
+    _audioLayerChannelStateUpdate();
 }
 
 // ===
@@ -526,38 +199,61 @@ void _updateSquareFrameTickState(SquareFrameTickState * state, GBUInt8 * frequen
 void audioInit() {
     gbAudioTerminalRegister = 0xFF;
     
-    _square1OwnerLayer = 0;
-    _square2OwnerLayer = 0;
-    _noiseOwnerLayer = 0;
+    // Initialize hardware channel states.
     
-    _audioInitPlaybackState(&_soundPlaybackState);
-    _audioInitPlaybackState(&_musicPlaybackState);
+    _currentHardwareChannelState = &_square1State;
+    _audioInitHardwareChannelState();
     
-    _square1FrameTickState.mode = 0;
-    _square2FrameTickState.mode = 0;
+    _currentHardwareChannelState = &_square2State;
+    _audioInitHardwareChannelState();
     
-    _soundPlaybackState.layer = audioLayerSound;
-    _musicPlaybackState.layer = audioLayerMusic;
+    _currentHardwareChannelState = &_noiseState;
+    _audioInitHardwareChannelState();
+    
+    // Initialize audio layer states.
+    
+    _musicState.layer = audioLayerMusic;
+    _soundState.layer = audioLayerSound;
+    
+    _currentLayerState = &_musicState;
+    _audioInitAudioLayerState();
+    
+    _currentLayerState = &_soundState;
+    _audioInitAudioLayerState();
 }
 
 void audioUpdate() {
-    _updateSquareFrameTickState(&_square1FrameTickState, &gbTone1FrequencyLowRegister);
-    _updateSquareFrameTickState(&_square2FrameTickState, &gbTone2FrequencyLowRegister);
+    // Update the layers.
     
-    _updatingState = &_soundPlaybackState;
-    _updatingComposition = _updatingState->composition;
-    _audioUpdatePlaybackState();
+    // We update sound before music because sound overrides music, but if it
+    // releases a hardware channel in the same frame that music will play a new
+    // sound, we should play that sound.
+    _currentLayerState = &_soundState;
+    _audioLayerStateUpdate();
     
-    _updatingState = &_musicPlaybackState;
-    _updatingComposition = _updatingState->composition;
-    _audioUpdatePlaybackState();
+    _currentLayerState = &_musicState;
+    _audioLayerStateUpdate();
+    
+    // Update the hardware channel states.
+    
+    _currentHardwareChannelState = &_square1State;
+    _audioHardwareChannelStateUpdate();
+    
+    _currentHardwareChannelState = &_square2State;
+    _audioHardwareChannelStateUpdate();
+    
+    _currentHardwareChannelState = &_noiseState;
+    _audioHardwareChannelStateUpdate();
 }
 
 void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioLayer layer, GBUInt8 priority) {
+    (void)romBank;
+    (void)priority;
+    
     if(layer == audioLayerSound) {
-        _audioPlayComposition(composition, romBank, &_soundPlaybackState, priority);
+        _soundState.composition = composition;
     } else if(layer == audioLayerMusic) {
-        _audioPlayComposition(composition, romBank, &_musicPlaybackState, priority);
+        _musicState.composition = composition;
     } else {
         gbLogUInt8(layer);
         gbFatalError("unrecognized audio layer");
