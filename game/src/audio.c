@@ -10,24 +10,39 @@
 // ===
 // Private Types
 // ===
+typedef struct {
+    GBUInt8 audioChainRowIndex;
+    GBUInt8 repeatCount;
+} AudioRepeatStackFrame;
+
+typedef AudioRepeatStackFrame AudioRepeatStack[_audioRepeatStackCount];
 
 /// An AudioHardwareChannelState manages the program-level view of one of the
 /// audio channels for the device. There is one instance of this struct per
 /// hardware channel, _not_ per program-level layer.
 typedef struct {
-    GBUInt8 padding;
+    AudioLayer ownershipClaims;
+    GBUInt8 * registers;
 } AudioHardwareChannelState;
 
 /// An AudioLayerChannelState represents the memory for a single channel of
 /// a layer.
 typedef struct {
+    GBUInt8 chainIndex;
+    GBUInt8 patternIndex;
+    GBUInt8 repeatStackIndex;
     GBUInt8 padding;
+    AudioRepeatStack repeatStack;
 } AudioLayerChannelState;
 
 /// An AudioLayerState represents the memory for an audio layer.
 typedef struct {
     AudioLayer layer;
     AudioComposition const * composition;
+    GBUInt8 priority;
+    GBUInt8 romBank;
+    GBUInt8 tempo;
+    GBUInt8 tempoTimer;
     AudioLayerChannelState square1;
     AudioLayerChannelState square2;
     AudioLayerChannelState noise;
@@ -135,12 +150,8 @@ AudioLayerState * _currentLayerState;
 
 /// Initializes the values of `_currentHardwareChannelState`.
 void _audioInitHardwareChannelState() {
-    _currentHardwareChannelState->padding = 0;
-}
-
-/// Initializes the values of `_currentLayerChannelState`.
-void _audioInitAudioLayerChannelState() {
-    _currentLayerChannelState->padding = 0;
+    _currentHardwareChannelState->ownershipClaims = 0;
+    memorySet(_currentHardwareChannelState->registers, 0, 5);
 }
 
 /// Initializes the values of `_currentLayerState`.
@@ -148,18 +159,29 @@ void _audioInitAudioLayerState() {
     AudioLayerState * state = _currentLayerState;
     
     state->composition = null;
+}
+
+/// Releases any ownership claims by `_currentLayerState` on 
+/// `_currentHardwareChannelState`.
+void _audioHardwareChannelReleaseOwner() {
+    GBUInt8 layer, layerMask;
     
-    // This function assumes square1, square2, and noise AudioLayerChannelState
-    // instances follow each other in AudioLayerState.
+    layer = _currentLayerState->layer;
+    layerMask = ~layer;
     
-    _currentLayerChannelState = &(state->square1);
-    _audioInitAudioLayerChannelState();
-    
-    _currentLayerChannelState += sizeof(AudioLayerChannelState);
-    _audioInitAudioLayerChannelState();
-    
-    _currentLayerChannelState += sizeof(AudioLayerChannelState);
-    _audioInitAudioLayerChannelState();
+    _currentHardwareChannelState->ownershipClaims &= layerMask;
+    if(_currentHardwareChannelState->ownershipClaims < layer) {
+        // Is that condition correct for only triggering silence if the
+        // currently playing layer was the released layer?
+        
+        // gbLog("TODO: Trigger silence");
+    }
+}
+
+/// Causes the hardware channel managed by `_audioHardwareChannelTrigger` to
+/// play sound.
+void _audioHardwareChannelTrigger() {
+    _currentHardwareChannelState->registers[4] |= 0x80;
 }
 
 /// Ticks _currentHardwareChannelState.
@@ -167,30 +189,44 @@ void _audioHardwareChannelStateUpdate() {
     
 }
 
-/// Ticks _currentLayerChannelState.
+/// Ticks _currentLayerChannelState. This should only happen when the tempo
+/// wraps.
 void _audioLayerChannelStateUpdate() {
-    
+    // Return if channel is inactive.
+    // Execute current note.
+    // Increment channel state.
 }
 
 /// Ticks _currentLayerState if it has a composition.
 void _audioLayerStateUpdate() {
+    GBUInt8 originalBank;
     AudioLayerState * state = _currentLayerState;
     
     if(state->composition == null) {
         return;
     }
     
+    if(state->tempoTimer != 0) {
+        state->tempoTimer--;
+        return;
+    }
+    
+    state->tempoTimer = state->tempo;
+    
     // This function assumes square1, square2, and noise AudioLayerChannelState
     // instances follow each other in AudioLayerState.
     
-    _currentLayerChannelState = &(state->square1);
-    _audioLayerChannelStateUpdate();
-    
-    _currentLayerChannelState += sizeof(AudioLayerChannelState);
-    _audioLayerChannelStateUpdate();
-    
-    _currentLayerChannelState += sizeof(AudioLayerChannelState);
-    _audioLayerChannelStateUpdate();
+    originalBank = banksROMGet();
+    banksROMSet(state->romBank); {
+        _currentLayerChannelState = &(state->square1);
+        _audioLayerChannelStateUpdate();
+        
+        _currentLayerChannelState += sizeof(AudioLayerChannelState);
+        _audioLayerChannelStateUpdate();
+        
+        _currentLayerChannelState += sizeof(AudioLayerChannelState);
+        _audioLayerChannelStateUpdate();
+    }; banksROMSet(originalBank);
 }
 
 // ===
@@ -200,6 +236,10 @@ void audioInit() {
     gbAudioTerminalRegister = 0xFF;
     
     // Initialize hardware channel states.
+    
+    _square1State.registers = &gbTone1SweepRegister;
+    _square2State.registers = &gbTone2UnusedRegister;
+    _noiseState.registers = &gbNoiseUnusedRegister;
     
     _currentHardwareChannelState = &_square1State;
     _audioInitHardwareChannelState();
@@ -247,15 +287,75 @@ void audioUpdate() {
 }
 
 void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank, AudioLayer layer, GBUInt8 priority) {
-    (void)romBank;
-    (void)priority;
+    AudioLayerState * state;
+    GBUInt8 originalBank;
+    GBUInt8 * statePointer;
     
+    // Get the state for the layer we'll be working with
     if(layer == audioLayerSound) {
-        _soundState.composition = composition;
+        state = &_soundState;
     } else if(layer == audioLayerMusic) {
-        _musicState.composition = composition;
+        state = &_musicState;
     } else {
         gbLogUInt8(layer);
         gbFatalError("unrecognized audio layer");
+        state = null;
+    }
+    
+    // Don't play the composition if it has a lower priority than the
+    // active composition.
+    if(state->composition != null && state->priority > priority) {
+        return;
+    }
+    
+    // Release any claims the current layer has on hardware channels.
+    
+    _currentLayerState = state;
+    
+    // For ownership management:
+    // - Release any ownership claims of the current layer no matter what,
+    //   silencing if the layer was actively playing audio.
+    // - Gain ownership for any channels that the composition has, silencing
+    //   if this layer is greater than the active layer.
+    
+    _currentHardwareChannelState = &_square1State;
+    _audioHardwareChannelReleaseOwner();
+    
+    _currentHardwareChannelState = &_square2State;
+    _audioHardwareChannelReleaseOwner();
+    
+    _currentHardwareChannelState = &_noiseState;
+    _audioHardwareChannelReleaseOwner();
+    
+    if(composition == null) {
+        // There's no composition, so we're done here.
+        state->composition = null;
+    } else {
+        // Assign the composition
+        originalBank = banksROMGet();
+        banksROMSet(romBank); {
+            state->composition = composition;
+            
+            statePointer = &(state->priority);
+            *(statePointer++) = priority;
+            *(statePointer++) = romBank;
+            *(statePointer++) = composition->initialTempo;
+            *(statePointer++) = 0;
+            
+            memorySet(&state->square1, 0, sizeof(AudioLayerChannelState) * 3);
+            
+            // TODO: Silence if this layer is greater than active layer
+            if(composition->square1Chain.numberOfRows != 0) {
+                _square1State.ownershipClaims |= layer;
+            }
+            
+            if(composition->square2Chain.numberOfRows != 0) {
+                _square2State.ownershipClaims |= layer;
+            }
+            
+            if(composition->noiseChain.numberOfRows != 0) {
+                _noiseState.ownershipClaims |= layer;
+            }
+        } banksROMSet(originalBank);
     }
 }
