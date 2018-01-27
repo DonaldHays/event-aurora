@@ -31,7 +31,9 @@ typedef struct {
     GBUInt8 chainIndex;
     GBUInt8 patternIndex;
     GBUInt8 repeatStackIndex;
-    GBUInt8 padding;
+    GBUInt8 leftVolumeFlag;
+    GBUInt8 rightVolumeFlag;
+    GBBool isNoise;
     AudioRepeatStack repeatStack;
 } AudioLayerChannelState;
 
@@ -160,6 +162,16 @@ void _audioInitAudioLayerState() {
     AudioLayerState * state = _currentLayerState;
     
     state->composition = null;
+    
+    state->square1.leftVolumeFlag = 0x10;
+    state->square1.rightVolumeFlag = 0x01;
+    state->square1.isNoise = false;
+    state->square2.leftVolumeFlag = 0x20;
+    state->square2.rightVolumeFlag = 0x02;
+    state->square2.isNoise = false;
+    state->noise.leftVolumeFlag = 0x80;
+    state->noise.rightVolumeFlag = 0x08;
+    state->noise.isNoise = true;
 }
 
 /// Releases any ownership claims by `_currentLayerState` on 
@@ -191,7 +203,45 @@ void _audioHardwareChannelStateUpdate() {
 }
 
 void _audioLayerChannelStatePlayNote() {
+    AudioComposition const * composition;
+    GBUInt8 patternTableIndex, patternIndex;
+    AudioPatternRow const * patternRow;
+    GBUInt8 const * instrument;
+    GBUInt8 * registers;
+    GBUInt16 note;
+    GBUInt8 upperCommand;
+    GBUInt8 lowerCommand;
     
+    composition = _currentLayerState->composition;
+    patternIndex = _currentLayerChannelState->patternIndex;
+    patternTableIndex = _currentAudioChain->rows[_currentLayerChannelState->chainIndex].pattern;
+    patternRow = &(composition->patterns[patternTableIndex][patternIndex]);
+    note = audioNoteTable[patternRow->note];
+    if(_currentLayerChannelState->isNoise) {
+        instrument = (GBUInt8 *)&(composition->noiseInstruments[patternRow->instrument]);
+        registers = _currentHardwareChannelState->registers + 1;
+    } else {
+        instrument = (GBUInt8 *)&(composition->squareInstruments[patternRow->instrument]);
+        registers = _currentHardwareChannelState->registers;
+    }
+    upperCommand = (patternRow->command) >> 8;
+    lowerCommand = (patternRow->command) & 0xFF;
+    
+    if(patternRow->note != 0) {
+        *(registers++) = *(instrument++);
+        *(registers++) = *(instrument++);
+        *(registers++) = *(instrument++);
+        
+        gbAudioTerminalRegister = ((*instrument) & 0x02) ? gbAudioTerminalRegister | _currentLayerChannelState->leftVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->leftVolumeFlag;
+        gbAudioTerminalRegister = ((*instrument) & 0x01) ? gbAudioTerminalRegister | _currentLayerChannelState->rightVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->rightVolumeFlag;
+        
+        if(_currentLayerChannelState->isNoise) {
+            *registers = 0x80;
+        } else {
+            *(registers++) = note & 0xFF;
+            *registers = 0x80 | (note >> 8);
+        }
+    }
 }
 
 void _audioLayerChannelStateIncrement() {
@@ -280,14 +330,17 @@ void _audioLayerStateUpdate() {
     
     originalBank = banksROMGet();
     banksROMSet(state->romBank); {
+        _currentHardwareChannelState = &_square1State;
         _currentLayerChannelState = &(state->square1);
         _currentAudioChain = &(state->composition->square1Chain);
         _audioLayerChannelStateUpdate();
         
+        _currentHardwareChannelState = &_square2State;
         _currentLayerChannelState++;
         _currentAudioChain++;
         _audioLayerChannelStateUpdate();
         
+        _currentHardwareChannelState = &_noiseState;
         _currentLayerChannelState++;
         _currentAudioChain++;
         _audioLayerChannelStateUpdate();
@@ -407,7 +460,19 @@ void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank,
             *(statePointer++) = composition->initialTempo;
             *(statePointer++) = 0;
             
-            memorySet(&state->square1, 0, sizeof(AudioLayerChannelState) * 3);
+            state->square1.chainIndex = 0;
+            state->square1.patternIndex = 0;
+            state->square1.repeatStackIndex = 0;
+            
+            state->square2.chainIndex = 0;
+            state->square2.patternIndex = 0;
+            state->square2.repeatStackIndex = 0;
+            
+            state->noise.chainIndex = 0;
+            state->noise.patternIndex = 0;
+            state->noise.repeatStackIndex = 0;
+            
+            // memorySet(&state->square1, 0, sizeof(AudioLayerChannelState) * 3);
             
             // TODO: Silence if this layer is greater than active layer
             if(composition->square1Chain.numberOfRows != 0) {
