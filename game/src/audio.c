@@ -174,6 +174,15 @@ void _audioInitAudioLayerState() {
     state->noise.isNoise = true;
 }
 
+GBBool _audioHardwareChannelIsCurrentOwner() {
+    GBUInt8 layer, layerMask;
+    
+    layer = _currentLayerState->layer;
+    layerMask = ~layer;
+    
+    return (_currentHardwareChannelState->ownershipClaims & layer) && (layer > (_currentHardwareChannelState->ownershipClaims & layerMask));
+}
+
 /// Releases any ownership claims by `_currentLayerState` on 
 /// `_currentHardwareChannelState`.
 void _audioHardwareChannelReleaseOwner() {
@@ -182,19 +191,30 @@ void _audioHardwareChannelReleaseOwner() {
     layer = _currentLayerState->layer;
     layerMask = ~layer;
     
-    _currentHardwareChannelState->ownershipClaims &= layerMask;
-    if(_currentHardwareChannelState->ownershipClaims < layer) {
-        // Is that condition correct for only triggering silence if the
-        // currently playing layer was the released layer?
-        
-        // gbLog("TODO: Trigger silence");
+    // If layer is in the current ownershipClaims value and is the most
+    // significant bit, then there was audio being actively played by the
+    // layer, so we need to trigger silence.
+    if((_currentHardwareChannelState->ownershipClaims & layer) && (layer > (_currentHardwareChannelState->ownershipClaims & layerMask))) {
+        gbAudioTerminalRegister = gbAudioTerminalRegister & ~(_currentLayerChannelState->leftVolumeFlag | _currentLayerChannelState->rightVolumeFlag);
     }
+    
+    // Remove the current layer from the ownership claims
+    _currentHardwareChannelState->ownershipClaims &= layerMask;
 }
 
-/// Causes the hardware channel managed by `_audioHardwareChannelTrigger` to
-/// play sound.
-void _audioHardwareChannelTrigger() {
-    _currentHardwareChannelState->registers[4] |= 0x80;
+void _audioHardwareChannelGainOwner() {
+    GBUInt8 layer;
+    
+    layer = _currentLayerState->layer;
+    
+    // If layer is greater than the current ownershipClaims value, then it'll
+    // be taking control of the hardware channel, so we need to trigger
+    // silence.
+    if(layer > _currentHardwareChannelState->ownershipClaims) {
+        gbAudioTerminalRegister = gbAudioTerminalRegister & ~(_currentLayerChannelState->leftVolumeFlag | _currentLayerChannelState->rightVolumeFlag);
+    }
+    
+    _currentHardwareChannelState->ownershipClaims |= layer;
 }
 
 /// Ticks _currentHardwareChannelState.
@@ -212,12 +232,15 @@ void _audioLayerChannelStatePlayNote() {
     GBUInt8 upperCommand;
     GBUInt8 lowerCommand;
     
+    AudioLayerChannelState * currentLayerChannelState;
+    
+    currentLayerChannelState = _currentLayerChannelState;
+    
     composition = _currentLayerState->composition;
-    patternIndex = _currentLayerChannelState->patternIndex;
-    patternTableIndex = _currentAudioChain->rows[_currentLayerChannelState->chainIndex].pattern;
+    patternIndex = currentLayerChannelState->patternIndex;
+    patternTableIndex = _currentAudioChain->rows[currentLayerChannelState->chainIndex].pattern;
     patternRow = &(composition->patterns[patternTableIndex][patternIndex]);
-    note = audioNoteTable[patternRow->note];
-    if(_currentLayerChannelState->isNoise) {
+    if(currentLayerChannelState->isNoise) {
         instrument = (GBUInt8 *)&(composition->noiseInstruments[patternRow->instrument]);
         registers = _currentHardwareChannelState->registers + 1;
     } else {
@@ -227,20 +250,38 @@ void _audioLayerChannelStatePlayNote() {
     upperCommand = (patternRow->command) >> 8;
     lowerCommand = (patternRow->command) & 0xFF;
     
-    if(patternRow->note != 0) {
+    if(patternRow->note != 0 && _audioHardwareChannelIsCurrentOwner()) {
         *(registers++) = *(instrument++);
         *(registers++) = *(instrument++);
         *(registers++) = *(instrument++);
         
-        gbAudioTerminalRegister = ((*instrument) & 0x02) ? gbAudioTerminalRegister | _currentLayerChannelState->leftVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->leftVolumeFlag;
-        gbAudioTerminalRegister = ((*instrument) & 0x01) ? gbAudioTerminalRegister | _currentLayerChannelState->rightVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->rightVolumeFlag;
+        gbAudioTerminalRegister = ((*instrument) & 0x02) ? gbAudioTerminalRegister | currentLayerChannelState->leftVolumeFlag : gbAudioTerminalRegister & ~currentLayerChannelState->leftVolumeFlag;
+        gbAudioTerminalRegister = ((*instrument) & 0x01) ? gbAudioTerminalRegister | currentLayerChannelState->rightVolumeFlag : gbAudioTerminalRegister & ~currentLayerChannelState->rightVolumeFlag;
         
-        if(_currentLayerChannelState->isNoise) {
+        if(currentLayerChannelState->isNoise) {
             *registers = 0x80;
         } else {
+            note = audioNoteTable[patternRow->note];
+            
             *(registers++) = note & 0xFF;
             *registers = 0x80 | (note >> 8);
         }
+    }
+    
+    if((upperCommand & 0xF0) == 0xA0) {
+        // Vibratto
+        // tickState->mode = 1;
+        // tickState->vibratoConfiguration = lowerCommand;
+        // tickState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
+    } else if((upperCommand & 0xF0) == 0xB0) {
+        // Arpeggio
+        // tickState->mode = 3;
+        // tickState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
+        // tickState->arpeggioStepsThird = (lowerCommand & 0x0F);
+        // tickState->tickCounter = 0;
+    } else if((upperCommand & 0xF0) == 0xC0) {
+        // Terminate Phrase
+        currentLayerChannelState->patternIndex = 15;
     }
 }
 
@@ -295,6 +336,20 @@ void _audioLayerChannelStateIncrement() {
             // There is no repeat command, so just move forward
             _currentLayerChannelState->chainIndex++;
         }
+        
+        if(_currentLayerChannelState->chainIndex == _currentAudioChain->numberOfRows) {
+            // We have reached the end of the chain.
+        
+            if(_currentAudioChain->infiniteRepeat & 0x80) {
+                // We're repeating infinitely, find the label index.
+                repeatIndex = _currentAudioChain->infiniteRepeat & 0x0F;
+                
+                // Jump to the label.
+                _currentLayerChannelState->chainIndex = _currentAudioChain->labels[repeatIndex];
+            } else {
+                _audioHardwareChannelReleaseOwner();
+            }
+        }
     }
 }
 
@@ -313,8 +368,9 @@ void _audioLayerChannelStateUpdate() {
 void _audioLayerStateUpdate() {
     GBUInt8 originalBank;
     AudioLayerState * state = _currentLayerState;
+    AudioComposition const * composition;
     
-    if(state->composition == null) {
+    if((composition = state->composition) == null) {
         return;
     }
     
@@ -332,7 +388,7 @@ void _audioLayerStateUpdate() {
     banksROMSet(state->romBank); {
         _currentHardwareChannelState = &_square1State;
         _currentLayerChannelState = &(state->square1);
-        _currentAudioChain = &(state->composition->square1Chain);
+        _currentAudioChain = &(composition->square1Chain);
         _audioLayerChannelStateUpdate();
         
         _currentHardwareChannelState = &_square2State;
@@ -344,6 +400,10 @@ void _audioLayerStateUpdate() {
         _currentLayerChannelState++;
         _currentAudioChain++;
         _audioLayerChannelStateUpdate();
+        
+        if(state->square1.chainIndex == composition->square1Chain.numberOfRows && state->square2.chainIndex == composition->square2Chain.numberOfRows && state->noise.chainIndex == composition->noiseChain.numberOfRows) {
+            state->composition = null;
+        }
     }; banksROMSet(originalBank);
 }
 
@@ -430,19 +490,16 @@ void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank,
     
     _currentLayerState = state;
     
-    // For ownership management:
-    // - Release any ownership claims of the current layer no matter what,
-    //   silencing if the layer was actively playing audio.
-    // - Gain ownership for any channels that the composition has, silencing
-    //   if this layer is greater than the active layer.
-    
     _currentHardwareChannelState = &_square1State;
+    _currentLayerChannelState = &(_currentLayerState->square1);
     _audioHardwareChannelReleaseOwner();
     
     _currentHardwareChannelState = &_square2State;
+    _currentLayerChannelState = &(_currentLayerState->square2);
     _audioHardwareChannelReleaseOwner();
     
     _currentHardwareChannelState = &_noiseState;
+    _currentLayerChannelState = &(_currentLayerState->noise);
     _audioHardwareChannelReleaseOwner();
     
     if(composition == null) {
@@ -472,19 +529,22 @@ void audioPlayComposition(AudioComposition const * composition, GBUInt8 romBank,
             state->noise.patternIndex = 0;
             state->noise.repeatStackIndex = 0;
             
-            // memorySet(&state->square1, 0, sizeof(AudioLayerChannelState) * 3);
-            
-            // TODO: Silence if this layer is greater than active layer
             if(composition->square1Chain.numberOfRows != 0) {
-                _square1State.ownershipClaims |= layer;
+                _currentHardwareChannelState = &_square1State;
+                _currentLayerChannelState = &(_currentLayerState->square1);
+                _audioHardwareChannelGainOwner();
             }
             
             if(composition->square2Chain.numberOfRows != 0) {
-                _square2State.ownershipClaims |= layer;
+                _currentHardwareChannelState = &_square2State;
+                _currentLayerChannelState = &(_currentLayerState->square2);
+                _audioHardwareChannelGainOwner();
             }
             
             if(composition->noiseChain.numberOfRows != 0) {
-                _noiseState.ownershipClaims |= layer;
+                _currentHardwareChannelState = &_noiseState;
+                _currentLayerChannelState = &(_currentLayerState->noise);
+                _audioHardwareChannelGainOwner();
             }
         } banksROMSet(originalBank);
     }
