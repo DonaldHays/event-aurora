@@ -140,6 +140,7 @@ AudioHardwareChannelState _noiseState;
 AudioLayerState _musicState;
 AudioLayerState _soundState;
 
+AudioChain const * _currentAudioChain;
 AudioHardwareChannelState * _currentHardwareChannelState;
 AudioLayerChannelState * _currentLayerChannelState;
 AudioLayerState * _currentLayerState;
@@ -189,12 +190,73 @@ void _audioHardwareChannelStateUpdate() {
     
 }
 
+void _audioLayerChannelStatePlayNote() {
+    
+}
+
+void _audioLayerChannelStateIncrement() {
+    GBUInt8 repeatCommand;
+    GBUInt8 repeatCount;
+    GBUInt8 repeatIndex;
+    
+    if((++(_currentLayerChannelState->patternIndex)) == 16) {
+        _currentLayerChannelState->patternIndex = 0;
+        
+        repeatCommand = _currentAudioChain->rows[_currentLayerChannelState->chainIndex].repeatCommand;
+        
+        if(repeatCommand & 0x80) {
+            // We have a repeat command to evaluate.
+            repeatCount = (repeatCommand >> 4) & 0x03;
+            repeatIndex = repeatCommand & 0x0F;
+            
+            if(_currentLayerChannelState->repeatStackIndex == 0 || _currentLayerChannelState->repeatStack[_currentLayerChannelState->repeatStackIndex - 1].audioChainRowIndex != _currentLayerChannelState->chainIndex) {
+                // Either the repeat stack is empty, or the top of the stack does not contain this row.
+                
+                // Make an entry in the stack.
+                _currentLayerChannelState->repeatStack[_currentLayerChannelState->repeatStackIndex].audioChainRowIndex = _currentLayerChannelState->chainIndex;
+                _currentLayerChannelState->repeatStack[_currentLayerChannelState->repeatStackIndex].repeatCount = repeatCount;
+                _currentLayerChannelState->repeatStackIndex++;
+                
+                // Jump to the label.
+                _currentLayerChannelState->chainIndex = _currentAudioChain->labels[repeatIndex];
+                
+                // Sanity assertion.
+                if(_currentLayerChannelState->repeatStackIndex == _audioRepeatStackCount) {
+                    gbFatalError("repeat stack overflow");
+                }
+            } else {
+                // We are already the top of the stack.
+                
+                // Decrease the repeat count by 1.
+                _currentLayerChannelState->repeatStack[_currentLayerChannelState->repeatStackIndex - 1].repeatCount--;
+                
+                if(_currentLayerChannelState->repeatStack[_currentLayerChannelState->repeatStackIndex - 1].repeatCount == 0) {
+                    // We have finished our final repeat, so move forward.
+                    _currentLayerChannelState->chainIndex++;
+                    
+                    // Also pop the stack element
+                    _currentLayerChannelState->repeatStackIndex--;
+                } else {
+                    // We have another repeat to do, jump to the label.
+                    _currentLayerChannelState->chainIndex = _currentAudioChain->labels[repeatIndex];
+                }
+            }
+        } else {
+            // There is no repeat command, so just move forward
+            _currentLayerChannelState->chainIndex++;
+        }
+    }
+}
+
 /// Ticks _currentLayerChannelState. This should only happen when the tempo
 /// wraps.
 void _audioLayerChannelStateUpdate() {
-    // Return if channel is inactive.
-    // Execute current note.
-    // Increment channel state.
+    if(_currentLayerChannelState->chainIndex == _currentAudioChain->numberOfRows) {
+        return;
+    }
+    
+    _audioLayerChannelStatePlayNote();
+    _audioLayerChannelStateIncrement();
 }
 
 /// Ticks _currentLayerState if it has a composition.
@@ -219,12 +281,15 @@ void _audioLayerStateUpdate() {
     originalBank = banksROMGet();
     banksROMSet(state->romBank); {
         _currentLayerChannelState = &(state->square1);
+        _currentAudioChain = &(state->composition->square1Chain);
         _audioLayerChannelStateUpdate();
         
-        _currentLayerChannelState += sizeof(AudioLayerChannelState);
+        _currentLayerChannelState++;
+        _currentAudioChain++;
         _audioLayerChannelStateUpdate();
         
-        _currentLayerChannelState += sizeof(AudioLayerChannelState);
+        _currentLayerChannelState++;
+        _currentAudioChain++;
         _audioLayerChannelStateUpdate();
     }; banksROMSet(originalBank);
 }
