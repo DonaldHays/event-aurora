@@ -86,6 +86,8 @@ void gameWake() {
     
     metamapTile = metamapTileAt(metamapX, metamapY);
     
+    gbBackgroundScrollXRegister = 0;
+    
     spritesClear();
     
     memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
