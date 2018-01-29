@@ -13,12 +13,12 @@
 // ===
 
 const MetamapTile metamapTiles[metamapWidth * metamapHeight] = {
-    { topleftMapIndices, topleftMapBank, 0 },
-    { abovesampleMapIndices, abovesampleMapBank, 0 },
-    { null, 0, 0 },
-    { walljumpMapIndices, walljumpMapBank, 0 },
-    { sampleMapIndices, sampleMapBank, 0 },
-    { testrightMapIndices, testrightMapBank, 0 },
+    { topleftMapIndices, topleftMapObjects, topleftMapBank, 0, 0, 0 },
+    { abovesampleMapIndices, abovesampleMapObjects, abovesampleMapBank, 0, 0, 0 },
+    { null, null, 0, 0, 0, 0 },
+    { walljumpMapIndices, walljumpMapObjects, walljumpMapBank, 0, 0, 0 },
+    { sampleMapIndices, sampleMapObjects, sampleMapBank, 0, 0, 0 },
+    { testrightMapIndices, testrightMapObjects, testrightMapBank, 0, 0, 0 },
 };
 
 // ===

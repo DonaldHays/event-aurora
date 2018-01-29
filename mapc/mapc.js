@@ -34,8 +34,61 @@ if(inputJSON.width != 10 || inputJSON.height != 8) {
 
 const bank = inputJSON["properties"]["Bank"] || 0;
 
+if(inputJSON["layers"].length < 2) {
+  console.error("error: map must have 2 layers.");
+  process.exit(1);
+}
+
 const backgroundLayer = inputJSON["layers"][0];
+const objectLayer = inputJSON["layers"][1];
 const metaIndices = backgroundLayer.data.map((index) => { return index - 1 });
+
+const tilesetDefinitions = inputJSON["tilesets"];
+const objectTilesetFirstGID = tilesetDefinitions[1]["firstgid"];
+
+const objects = objectLayer["data"].map((element) => {
+  if(element == 0) {
+    return element;
+  } else {
+    return (element - objectTilesetFirstGID) + 1;
+  }
+});
+
+const objectCounts = {};
+objects.forEach((object) => {
+  if(object == 0) {
+    return;
+  }
+  
+  if(objectCounts[object] === undefined) {
+    objectCounts[object] = 1;
+  } else {
+    objectCounts[object] = objectCounts[object] + 1;
+  }
+});
+
+if(objectCounts["1"] === undefined) {
+  console.error("error: map must have spawn point.");
+  process.exit(1);
+}
+
+for (const key in objectCounts) {
+  if (objectCounts.hasOwnProperty(key)) {
+    const element = objectCounts[key];
+    
+    switch(key) {
+      case "1":
+        if(element != 1) {
+          console.error("error: map must have exactly one spawn point.");
+          process.exit(1);
+        }
+        break;
+      default:
+        console.error(`error: unrecognized object gid ${element}.`);
+        process.exit(1);
+    }
+  }
+}
 
 function writeHeader() {
   let output = [];
@@ -53,6 +106,9 @@ function writeHeader() {
   output.push(``);
   
   output.push(`extern const GBUInt8 ${name}MapIndices[];`);
+  output.push(``);
+  
+  output.push(`extern const GBUInt8 ${name}MapObjects[];`);
   output.push(``);
   
   output.push(`#endif`);
@@ -79,6 +135,14 @@ function writeImplementation() {
     return `0x${formatter.toHex(index)}`;
   });
   output.push(`  ${indexStrings.join(", ")}`);
+  output.push(`};`);
+  output.push(``);
+  
+  output.push(`const GBUInt8 ${name}MapObjects[] = {`);
+  const objectStrings = objects.map((index) => {
+    return `0x${formatter.toHex(index)}`;
+  });
+  output.push(`  ${objectStrings.join(", ")}`);
   output.push(`};`);
   output.push(``);
   

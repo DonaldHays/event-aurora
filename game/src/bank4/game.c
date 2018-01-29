@@ -38,6 +38,7 @@ typedef enum {
 // Private Variables
 // ===
 GBUInt8 _mapMetatiles[80];
+GBUInt8 _mapObjects[80];
 GBUInt8 _tileMapStaging[gameTileMapStagingLength];
 MetatileIndices _metatileIndices[256];
 MetatileAttributes _metatileAttributes[256];
@@ -62,8 +63,7 @@ GBBool shouldTransitionToNewMap;
 void gameInit() {
     metamapX = 1;
     metamapY = 1;
-    heroSpawnX = 16;
-    heroSpawnY = 64;
+    heroShouldSpawnAtSpawnPoint = true;
     heroSpawnFaceLeft = false;
     shouldTransitionToNewMap = false;
     _gameFade = 0;
@@ -80,6 +80,7 @@ void gameWake() {
     GBUInt8 x, y, index;
     GBUInt8 metatileIndex;
     GBUInt8 attributesIndex;
+    GBUInt8 objectIndex;
     MetamapTile const * metamapTile;
     
     lcdYTrackerOld = gbLCDYCoordinateRegister;
@@ -91,6 +92,7 @@ void gameWake() {
     spritesClear();
     
     memoryCopyBanked(_mapMetatiles, metamapTile->indices, 80, metamapTile->bank);
+    memoryCopyBanked(_mapObjects, metamapTile->objects, 80, metamapTile->bank);
     memoryCopyBanked(_metatileIndices, castleMetatilesIndices, castleMetatilesCount * sizeof(MetatileIndices), castleMetatilesBank);
     memoryCopyBanked(_metatileAttributes, castleMetatilesAttributes, castleMetatilesCount * sizeof(MetatileAttributes), castleMetatilesBank);
     
@@ -117,6 +119,7 @@ void gameWake() {
     y = 0;
     for(index = 0; index != 80; index++) {
         metatileIndex = _mapMetatiles[index];
+        objectIndex = _mapObjects[index];
         attributesIndex = (x + 2) + (y + 2) * gameMapAttributesWidth;
         
         mapAttributes[attributesIndex] = _metatileAttributes[metatileIndex];
@@ -125,6 +128,12 @@ void gameWake() {
         _tileMapStaging[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][1];
         _tileMapStaging[(x * 2) + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][2];
         _tileMapStaging[(x * 2) + 1 + (y * 2 * gbTileMapWidth) + gbTileMapWidth + gbTileMapWidth * 2] = _metatileIndices[metatileIndex][3];
+        
+        if(objectIndex == 1 && heroShouldSpawnAtSpawnPoint) {
+            heroShouldSpawnAtSpawnPoint = false;
+            heroSpawnX = x * 16;
+            heroSpawnY = y * 16;
+        }
         
         x++;
         if(x == 10) {

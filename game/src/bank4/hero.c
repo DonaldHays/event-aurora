@@ -36,6 +36,7 @@ SpriteAnimationState _heroAnimationState;
 GBUInt8 heroSpawnX;
 GBUInt8 heroSpawnY;
 GBUInt8 heroSpawnFaceLeft;
+GBBool heroShouldSpawnAtSpawnPoint;
 
 // ===
 // Private API

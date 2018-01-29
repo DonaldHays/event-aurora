@@ -5,8 +5,11 @@
 
 typedef struct {
     GBUInt8 * indices;
+    GBUInt8 * objects;
     GBUInt8 bank;
-    GBUInt8 padding;
+    GBUInt8 padding0;
+    GBUInt8 padding1;
+    GBUInt8 padding2;
 } MetamapTile;
 
 #define metamapWidth 3
