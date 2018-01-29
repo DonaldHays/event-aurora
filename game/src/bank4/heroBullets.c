@@ -58,9 +58,9 @@ void heroBulletsUpdate() {
         }
         
         if(bullet->flags & heroBulletsFlagRight) {
-            bullet->x += 4;
+            bullet->x += 3;
         } else {
-            bullet->x -= 4;
+            bullet->x -= 3;
         }
         
         *(attributes++) = bullet->y - 3;
