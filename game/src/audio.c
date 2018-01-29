@@ -297,22 +297,16 @@ void _audioLayerChannelStatePlayNote() {
     GBUInt8 lowerCommand;
     GBBool isHardwareOwner;
     
-    AudioLayerChannelState * currentLayerChannelState;
-    AudioHardwareChannelState * currentHardwareChannelState;
-    
-    currentLayerChannelState = _currentLayerChannelState;
-    currentHardwareChannelState = _currentHardwareChannelState;
-    
     composition = _currentLayerState->composition;
-    patternIndex = currentLayerChannelState->patternIndex;
-    patternTableIndex = _currentAudioChain->rows[currentLayerChannelState->chainIndex].pattern;
+    patternIndex = _currentLayerChannelState->patternIndex;
+    patternTableIndex = _currentAudioChain->rows[_currentLayerChannelState->chainIndex].pattern;
     patternRow = &(composition->patterns[patternTableIndex][patternIndex]);
-    if(currentLayerChannelState->isNoise) {
+    if(_currentLayerChannelState->isNoise) {
         instrument = (GBUInt8 *)&(composition->noiseInstruments[patternRow->instrument]);
-        registers = currentHardwareChannelState->registers + 1;
+        registers = _currentHardwareChannelState->registers + 1;
     } else {
         instrument = (GBUInt8 *)&(composition->squareInstruments[patternRow->instrument]);
-        registers = currentHardwareChannelState->registers;
+        registers = _currentHardwareChannelState->registers;
     }
     upperCommand = (patternRow->command) >> 8;
     lowerCommand = (patternRow->command) & 0xFF;
@@ -323,10 +317,10 @@ void _audioLayerChannelStatePlayNote() {
         *(registers++) = *(instrument++);
         *(registers++) = *(instrument++);
         
-        gbAudioTerminalRegister = ((*instrument) & 0x02) ? gbAudioTerminalRegister | currentLayerChannelState->leftVolumeFlag : gbAudioTerminalRegister & ~currentLayerChannelState->leftVolumeFlag;
-        gbAudioTerminalRegister = ((*instrument) & 0x01) ? gbAudioTerminalRegister | currentLayerChannelState->rightVolumeFlag : gbAudioTerminalRegister & ~currentLayerChannelState->rightVolumeFlag;
+        gbAudioTerminalRegister = ((*instrument) & 0x02) ? gbAudioTerminalRegister | _currentLayerChannelState->leftVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->leftVolumeFlag;
+        gbAudioTerminalRegister = ((*instrument) & 0x01) ? gbAudioTerminalRegister | _currentLayerChannelState->rightVolumeFlag : gbAudioTerminalRegister & ~_currentLayerChannelState->rightVolumeFlag;
         
-        if(currentLayerChannelState->isNoise) {
+        if(_currentLayerChannelState->isNoise) {
             *registers = 0x80;
         } else {
             note = audioNoteTable[patternRow->note];
@@ -334,27 +328,27 @@ void _audioLayerChannelStatePlayNote() {
             *(registers++) = note & 0xFF;
             *registers = 0x80 | (note >> 8);
             
-            currentHardwareChannelState->frequency = note;
+            _currentHardwareChannelState->frequency = note;
         }
         
-        currentHardwareChannelState->mode = 0;
-        currentHardwareChannelState->note = patternRow->note;
+        _currentHardwareChannelState->mode = 0;
+        _currentHardwareChannelState->note = patternRow->note;
     }
     
     if((upperCommand & 0xF0) == 0xA0 && isHardwareOwner) {
         // Vibratto
-        currentHardwareChannelState->mode = 1;
-        currentHardwareChannelState->vibratoConfiguration = lowerCommand;
-        currentHardwareChannelState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
+        _currentHardwareChannelState->mode = 1;
+        _currentHardwareChannelState->vibratoConfiguration = lowerCommand;
+        _currentHardwareChannelState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
     } else if((upperCommand & 0xF0) == 0xB0 && isHardwareOwner) {
         // Arpeggio
-        currentHardwareChannelState->mode = 3;
-        currentHardwareChannelState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
-        currentHardwareChannelState->arpeggioStepsThird = (lowerCommand & 0x0F);
-        currentHardwareChannelState->tickCounter = 0;
+        _currentHardwareChannelState->mode = 3;
+        _currentHardwareChannelState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
+        _currentHardwareChannelState->arpeggioStepsThird = (lowerCommand & 0x0F);
+        _currentHardwareChannelState->tickCounter = 0;
     } else if((upperCommand & 0xF0) == 0xC0) {
         // Terminate Phrase
-        currentLayerChannelState->patternIndex = 15;
+        _currentLayerChannelState->patternIndex = 15;
     }
 }
 
