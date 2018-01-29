@@ -23,6 +23,21 @@ typedef AudioRepeatStackFrame AudioRepeatStack[_audioRepeatStackCount];
 typedef struct {
     AudioLayer ownershipClaims;
     GBUInt8 * registers;
+    
+    /**
+     * 0x00 -> default
+     * 0x01 -> vibratoUp
+     * 0x02 -> vibratoDown
+     * 0x03 -> arpeggio
+     * 0x04 -> terminate
+     */
+    GBUInt8 mode;
+    GBUInt8 vibratoConfiguration;
+    GBUInt8 tickCounter;
+    GBUInt16 frequency;
+    GBUInt8 note;
+    GBUInt8 arpeggioStepsSecond;
+    GBUInt8 arpeggioStepsThird;
 } AudioHardwareChannelState;
 
 /// An AudioLayerChannelState represents the memory for a single channel of
@@ -155,6 +170,7 @@ AudioLayerState * _currentLayerState;
 void _audioInitHardwareChannelState() {
     _currentHardwareChannelState->ownershipClaims = 0;
     memorySet(_currentHardwareChannelState->registers, 0, 5);
+    _currentHardwareChannelState->mode = 0;
 }
 
 /// Initializes the values of `_currentLayerState`.
@@ -196,6 +212,7 @@ void _audioHardwareChannelReleaseOwner() {
     // layer, so we need to trigger silence.
     if((_currentHardwareChannelState->ownershipClaims & layer) && (layer > (_currentHardwareChannelState->ownershipClaims & layerMask))) {
         gbAudioTerminalRegister = gbAudioTerminalRegister & ~(_currentLayerChannelState->leftVolumeFlag | _currentLayerChannelState->rightVolumeFlag);
+        _currentHardwareChannelState->mode = 0;
     }
     
     // Remove the current layer from the ownership claims
@@ -212,6 +229,7 @@ void _audioHardwareChannelGainOwner() {
     // silence.
     if(layer > _currentHardwareChannelState->ownershipClaims) {
         gbAudioTerminalRegister = gbAudioTerminalRegister & ~(_currentLayerChannelState->leftVolumeFlag | _currentLayerChannelState->rightVolumeFlag);
+        _currentHardwareChannelState->mode = 0;
     }
     
     _currentHardwareChannelState->ownershipClaims |= layer;
@@ -219,7 +237,53 @@ void _audioHardwareChannelGainOwner() {
 
 /// Ticks _currentHardwareChannelState.
 void _audioHardwareChannelStateUpdate() {
+    GBUInt16 frequency;
+    AudioHardwareChannelState * state;
     
+    state = _currentHardwareChannelState;
+    
+    if(state->mode == 1) {
+        // Vibratto Increment
+        state->tickCounter--;
+        if(state->tickCounter == 0) {
+            state->tickCounter = state->vibratoConfiguration >> 4;
+            state->mode = 2;
+        } else {
+            state->frequency += state->vibratoConfiguration & 0x0F;
+            
+            state->registers[3] = state->frequency & 0xFF;
+            state->registers[4] = state->frequency >> 8;
+        }
+    } else if(state->mode == 2) {
+        // Vibratto Decrement
+        state->tickCounter--;
+        if(state->tickCounter == 0) {
+            state->tickCounter = state->vibratoConfiguration >> 4;
+            state->mode = 1;
+        } else {
+            state->frequency -= state->vibratoConfiguration & 0x0F;
+            
+            state->registers[3] = state->frequency & 0xFF;
+            state->registers[4] = state->frequency >> 8;
+        }
+    } else if(state->mode == 3) {
+        // Arpeggio
+        state->tickCounter++;
+        if(state->tickCounter == 3) {
+            state->tickCounter = 0;
+        }
+        
+        if((state->tickCounter) == 0) {
+            frequency = audioNoteTable[state->note];
+        } else if((state->tickCounter) == 1) {
+            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond];
+        } else {
+            frequency = audioNoteTable[state->note + state->arpeggioStepsSecond + state->arpeggioStepsThird];
+        }
+        
+        state->registers[3] = frequency & 0xFF;
+        state->registers[4] = (frequency >> 8);
+    }
 }
 
 void _audioLayerChannelStatePlayNote() {
@@ -231,10 +295,13 @@ void _audioLayerChannelStatePlayNote() {
     GBUInt16 note;
     GBUInt8 upperCommand;
     GBUInt8 lowerCommand;
+    GBBool isHardwareOwner;
     
     AudioLayerChannelState * currentLayerChannelState;
+    AudioHardwareChannelState * currentHardwareChannelState;
     
     currentLayerChannelState = _currentLayerChannelState;
+    currentHardwareChannelState = _currentHardwareChannelState;
     
     composition = _currentLayerState->composition;
     patternIndex = currentLayerChannelState->patternIndex;
@@ -242,15 +309,16 @@ void _audioLayerChannelStatePlayNote() {
     patternRow = &(composition->patterns[patternTableIndex][patternIndex]);
     if(currentLayerChannelState->isNoise) {
         instrument = (GBUInt8 *)&(composition->noiseInstruments[patternRow->instrument]);
-        registers = _currentHardwareChannelState->registers + 1;
+        registers = currentHardwareChannelState->registers + 1;
     } else {
         instrument = (GBUInt8 *)&(composition->squareInstruments[patternRow->instrument]);
-        registers = _currentHardwareChannelState->registers;
+        registers = currentHardwareChannelState->registers;
     }
     upperCommand = (patternRow->command) >> 8;
     lowerCommand = (patternRow->command) & 0xFF;
+    isHardwareOwner = _audioHardwareChannelIsCurrentOwner();
     
-    if(patternRow->note != 0 && _audioHardwareChannelIsCurrentOwner()) {
+    if(patternRow->note != 0 && isHardwareOwner) {
         *(registers++) = *(instrument++);
         *(registers++) = *(instrument++);
         *(registers++) = *(instrument++);
@@ -265,20 +333,25 @@ void _audioLayerChannelStatePlayNote() {
             
             *(registers++) = note & 0xFF;
             *registers = 0x80 | (note >> 8);
+            
+            currentHardwareChannelState->frequency = note;
         }
+        
+        currentHardwareChannelState->mode = 0;
+        currentHardwareChannelState->note = patternRow->note;
     }
     
-    if((upperCommand & 0xF0) == 0xA0) {
+    if((upperCommand & 0xF0) == 0xA0 && isHardwareOwner) {
         // Vibratto
-        // tickState->mode = 1;
-        // tickState->vibratoConfiguration = lowerCommand;
-        // tickState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
-    } else if((upperCommand & 0xF0) == 0xB0) {
+        currentHardwareChannelState->mode = 1;
+        currentHardwareChannelState->vibratoConfiguration = lowerCommand;
+        currentHardwareChannelState->tickCounter = lowerCommand >> 5; // upper nibble (>> 4) divided by 2 (>> 1)
+    } else if((upperCommand & 0xF0) == 0xB0 && isHardwareOwner) {
         // Arpeggio
-        // tickState->mode = 3;
-        // tickState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
-        // tickState->arpeggioStepsThird = (lowerCommand & 0x0F);
-        // tickState->tickCounter = 0;
+        currentHardwareChannelState->mode = 3;
+        currentHardwareChannelState->arpeggioStepsSecond = (lowerCommand & 0xF0) >> 4;
+        currentHardwareChannelState->arpeggioStepsThird = (lowerCommand & 0x0F);
+        currentHardwareChannelState->tickCounter = 0;
     } else if((upperCommand & 0xF0) == 0xC0) {
         // Terminate Phrase
         currentLayerChannelState->patternIndex = 15;
