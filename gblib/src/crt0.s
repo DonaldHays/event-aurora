@@ -84,6 +84,7 @@
     call _main
 .exit:
     halt
+    nop
     jr .exit
 
     .area _HOME
