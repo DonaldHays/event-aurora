@@ -83,8 +83,11 @@ for (const key in objectCounts) {
           process.exit(1);
         }
         break;
+      case "9":
+        // TODO: Clustering.
+        break;
       default:
-        console.error(`error: unrecognized object gid ${element}.`);
+        console.error(`error: unrecognized object gid ${key}.`);
         process.exit(1);
     }
   }

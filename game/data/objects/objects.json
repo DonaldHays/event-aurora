@@ -12,6 +12,10 @@
      "0":
         {
          "type":"heroSpawn"
+        },
+     "8":
+        {
+         "type":"zombieSpawn"
         }
     },
  "tilewidth":16,
