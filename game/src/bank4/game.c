@@ -1,6 +1,7 @@
 #include "game.h"
 #include "../data/gfx_castleTiles.h"
 #include "../data/gfx_heroTiles.h"
+#include "../data/gfx_zombieTiles.h"
 #include "../data/gfx_particleTiles.h"
 #include "../data/meta_castleMetatiles.h"
 #include "../memory.h"
@@ -20,6 +21,7 @@
 typedef enum {
     gameLoadingStageGameplay,
     gameLoadingStageCopyingHero,
+    gameLoadingStageCopyingZombie,
     gameLoadingStageCopyingTiles,
     gameLoadingStageWritingBG,
     gameLoadingStageCopyingParticles
@@ -232,6 +234,14 @@ void gameUpdateGraphics() {
         memoryCopy64Banked(gbTileMemory + _gameLoadingOffset, heroTiles + _gameLoadingOffset, heroTilesBank);
         _gameLoadingOffset += 64;
         if(_gameLoadingOffset >= heroTilesLength) {
+            _gameLoadingOffset = 0;
+            _gameLoadingStage = gameLoadingStageCopyingZombie;
+        }
+        break;
+    case gameLoadingStageCopyingZombie:
+        memoryCopy64Banked(gbTileMemory + _gameLoadingOffset + 48 * 16, zombieTiles + _gameLoadingOffset, zombieTilesBank);
+        _gameLoadingOffset += 64;
+        if(_gameLoadingOffset >= zombieTilesLength) {
             _gameLoadingOffset = 0;
             if(_gameLoadedTiles != castleTiles) {
                 _gameLoadedTiles = castleTiles;

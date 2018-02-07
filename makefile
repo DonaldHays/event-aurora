@@ -32,6 +32,7 @@ BANK1_GFX = \
 	game/data/gfx/font.png \
 	game/data/gfx/titleTiles.png \
 	game/data/gfx/heroTiles.png \
+	game/data/gfx/zombieTiles.png \
 	game/data/gfx/particleTiles.png
 BANK1_SRCS += $(patsubst game/data/gfx/%.png,game/src/data/gfx_%.c,$(BANK1_GFX))
 
